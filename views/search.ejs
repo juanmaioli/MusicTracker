@@ -1,0 +1,75 @@
+<%- include('partials/header') %>
+
+<div class="row mb-5">
+  <div class="col-lg-8 mx-auto text-center">
+    <h1 class="display-5 fw-extrabold mb-3"><i class="bi bi-search text-danger me-2"></i>Buscar Artistas en <span class="text-gradient">Last.fm</span></h1>
+    <p class="text-secondary mb-4">Buscá e importá biografías completas en español y discografías directamente desde Last.fm de forma gratuita.</p>
+    
+    <form action="/artists/search" method="GET" class="d-flex gap-2">
+      <input type="text" name="q" class="form-control form-control-lg bg-dark border-secondary text-white rounded-pill px-4" placeholder="Ej: Soda Stereo, Spinetta, Linkin Park..." value="<%= query %>" required aria-label="Nombre del artista">
+      <button class="btn btn-spotify btn-lg px-4" type="submit"><i class="bi bi-search me-2"></i>Buscar</button>
+    </form>
+  </div>
+</div>
+
+<% if (query && results.length === 0) { %>
+  <div class="row">
+    <div class="col-lg-6 mx-auto text-center py-5">
+      <div class="glass-card p-5">
+        <i class="bi bi-music-note-beamed fs-1 text-muted mb-3"></i>
+        <h3>No se encontraron resultados</h3>
+        <p class="text-secondary">No pudimos encontrar ningún artista en Last.fm para "<%= query %>". Probá con otra búsqueda.</p>
+      </div>
+    </div>
+  </div>
+<% } else if (results.length > 0) { %>
+  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    <% results.forEach(artist => { %>
+      <div class="col">
+        <div class="card h-100 glass-card text-white overflow-hidden d-flex flex-column justify-content-between">
+          <div class="position-relative">
+            <% if (artist.image) { %>
+              <img src="<%= artist.image %>" class="card-img-top object-fit-cover" style="height: 250px;" alt="<%= artist.name %>">
+            <% } else { %>
+              <div class="bg-secondary d-flex align-items-center justify-content-center text-dark" style="height: 250px;">
+                <i class="bi bi-person-fill display-1"></i>
+              </div>
+            <% } %>
+            <div class="position-absolute top-0 end-0 m-3">
+              <span class="badge bg-dark bg-opacity-75 text-danger border border-danger px-2 py-1">
+                <i class="bi bi-star-fill me-1"></i><%= artist.popularity %>% coinc.
+              </span>
+            </div>
+          </div>
+          <div class="card-body d-flex flex-column justify-content-between p-4">
+            <div>
+              <h2 class="card-title h4 fw-bold mb-3"><%= artist.name %></h2>
+            </div>
+            
+            <form action="/artists/add/<%= artist.id %>" method="POST" class="import-form">
+              <button type="submit" class="btn btn-spotify w-100 d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-plus-circle-fill"></i>
+                <span>Seguir e Importar</span>
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+<% } %>
+
+<script>
+  document.querySelectorAll('.import-form').forEach(form => {
+    form.addEventListener('submit', function() {
+      const button = this.querySelector('button[type="submit"]');
+      button.disabled = true;
+      button.innerHTML = `
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        <span>Scrapeando e Importando...</span>
+      `;
+    });
+  });
+</script>
+
+<%- include('partials/footer') %>

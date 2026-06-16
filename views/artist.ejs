@@ -1,0 +1,392 @@
+<%- include('partials/header') %>
+
+<%
+function formatDuration(ms) {
+  if (!ms) return '0:00';
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+}
+%>
+
+<div class="row g-4">
+  <!-- Perfil Lateral -->
+  <div class="col-lg-4">
+    <div class="glass-card p-4 text-center sticky-lg-top" style="top: 100px; z-index: 1;">
+      <% if (artist.image) { %>
+        <img src="<%= artist.image %>" alt="<%= artist.name %>" class="img-fluid rounded-4 shadow-lg mb-4 object-fit-cover" style="max-height: 300px; width: 100%;">
+      <% } else { %>
+        <div class="rounded-4 bg-secondary d-flex align-items-center justify-content-center text-dark mb-4" style="height: 300px;">
+          <i class="bi bi-person-fill display-1"></i>
+        </div>
+      <% } %>
+
+      <h1 class="h2 fw-extrabold mb-1"><%= artist.name %></h1>
+      
+      <div class="mb-3 d-flex flex-wrap justify-content-center gap-1">
+        <% artist.genresList.forEach(genre => { %>
+          <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill text-capitalize"><%= genre %></span>
+        <% }) %>
+      </div>
+
+      <div class="d-flex justify-content-center gap-4 mb-4 text-secondary">
+        <div>
+          <span class="d-block fw-bold text-white"><%= albums.length %></span>
+          <small>Álbumes</small>
+        </div>
+      </div>
+
+      <hr class="border-secondary border-opacity-25 my-4">
+
+      <!-- Gestión del Estado -->
+      <form action="/artists/<%= artist.id %>/status" method="POST" class="mb-4">
+        <label for="statusSelect" class="form-label fw-bold d-block text-start"><i class="bi bi-bookmark-fill text-danger me-1"></i>Estado de Seguimiento</label>
+        <div class="input-group">
+          <select class="form-select bg-dark border-secondary text-white" id="statusSelect" name="status" aria-label="Seleccionar estado de seguimiento">
+            <option value="Siguiendo" <%= artist.status === 'Siguiendo' ? 'selected' : '' %>>Siguiendo</option>
+            <option value="En pausa" <%= artist.status === 'En pausa' ? 'selected' : '' %>>En pausa</option>
+            <option value="Interés" <%= artist.status === 'Interés' ? 'selected' : '' %>>Interés</option>
+          </select>
+          <button class="btn btn-outline-danger" type="submit">Actualizar</button>
+        </div>
+      </form>
+
+      <!-- Eliminar Artista -->
+      <form action="/artists/<%= artist.id %>/delete" method="POST" onsubmit="return confirm('¿Estás seguro de que querés eliminar a este artista de tu base de datos? Esto también borrará sus álbumes y calificaciones.');">
+        <button class="btn btn-outline-danger w-100 btn-sm" type="submit">
+          <i class="bi bi-trash3 me-1"></i>Dejar de Seguir y Borrar
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Discografía, Canciones y Biografía Scrapeada -->
+  <div class="col-lg-8">
+    <!-- Biografía Scrapeada completa de Last.fm -->
+    <div class="glass-card p-4 mb-4">
+      <h2 class="h4 fw-bold mb-3 d-flex align-items-center"><i class="bi bi-body-text text-danger me-2"></i>Biografía<a href="https://www.last.fm/es/music/<%= artist.id %>" target="_blank" class="text-secondary fs-6 fw-normal text-decoration-none ms-2" title="Ver perfil en Last.fm">(Last.fm) <i class="bi bi-box-arrow-up-right" style="font-size: 0.75rem;"></i></a></h2>
+      <div class="text-secondary overflow-y-auto style-scrollbar" style="max-height: 250px; font-size: 0.95rem; line-height: 1.6;">
+        <p style="white-space: pre-line;"><%= artist.notes %></p> 
+      </div>
+    </div>
+
+    <% if (artist.imagesList && artist.imagesList.length > 0) { %>
+      <!-- Galería de Fotos Interactiva al estilo ShowTracker -->
+      <div class="glass-card p-4 mb-4">
+        <h2 class="h4 fw-bold mb-4 d-flex align-items-center gap-2"><i class="bi bi-images text-danger me-2"></i>Galería de Fotos</h2>
+        
+        <div class="d-flex flex-column align-items-center">
+          <!-- Visor Principal -->
+          <div class="main-gallery-viewer rounded-4 overflow-hidden shadow mb-4 bg-black bg-opacity-25 border border-secondary border-opacity-10 position-relative w-100" style="max-width: 800px; aspect-ratio: 16/9;">
+            <a href="<%= artist.imagesList[0] %>" id="main-gallery-link" target="_blank" title="Abrir imagen en tamaño completo en pestaña nueva" class="d-block w-100 h-100 cursor-zoom">
+              <img id="main-gallery-img" src="<%= artist.imagesList[0] %>" class="w-100 h-100 object-fit-contain" alt="Foto de <%= artist.name %>" style="transition: opacity 0.2s ease;">
+            </a>
+          </div>
+          
+          <% if (artist.imagesList.length > 1) { %>
+            <!-- Tira de Miniaturas -->
+            <div class="d-flex gap-2 overflow-x-auto w-100 pb-2 px-1 justify-content-start" id="galleryThumbnails" style="max-width: 800px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
+              <% artist.imagesList.forEach((img, idx) => { %>
+                <div class="gallery-thumbnail-wrapper rounded-3 overflow-hidden border cursor-pointer bg-dark transition-all <%= idx === 0 ? 'border-danger border-2 shadow' : 'border-secondary border-opacity-25' %>" 
+                     style="width: 120px; aspect-ratio: 16/9; flex-shrink: 0; transition: all 0.2s ease;"
+                     onclick="selectGalleryImage('<%= img %>', this)"
+                     title="Ver foto <%= idx + 1 %>">
+                  <img src="<%= img %>" class="w-100 h-100 object-fit-cover <%= idx === 0 ? 'opacity-100' : 'opacity-70' %>" alt="Miniatura <%= idx + 1 %>">
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- Discografía -->
+    <div class="glass-card p-4">
+      <h2 class="h3 fw-bold mb-4"><i class="bi bi-disc-fill text-danger me-2"></i>Discografía y Canciones</h2>
+
+      <% if (albums.length === 0) { %>
+        <p class="text-secondary text-center py-5">No se encontraron álbumes registrados para este artista.</p>
+      <% } else { %>
+        <div class="accordion accordion-flush rounded-4 overflow-hidden border border-secondary border-opacity-25" id="discographyAccordion">
+          <% albums.forEach((album, index) => { %>
+            <div class="accordion-item bg-dark bg-opacity-50 text-white border-bottom border-secondary border-opacity-25">
+              <div class="accordion-header d-flex align-items-center justify-content-between p-3" id="heading-<%= album.id %>">
+                <div class="d-flex align-items-center gap-3 flex-grow-1">
+                  <button class="accordion-button collapsed bg-transparent shadow-none p-0 text-white w-auto" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-<%= album.id %>" aria-expanded="false" aria-controls="collapse-<%= album.id %>" aria-label="Ver tracks de <%= album.title %>">
+                  </button>
+
+                  <% if (album.cover_image) { %>
+                    <img src="<%= album.cover_image %>" alt="Portada de <%= album.title %>" class="rounded object-fit-cover shadow-sm" style="width: 50px; height: 50px;">
+                  <% } else { %>
+                    <div class="rounded bg-secondary d-flex align-items-center justify-content-center text-dark shadow-sm" style="width: 50px; height: 50px;">
+                      <i class="bi bi-music-note"></i>
+                    </div>
+                  <% } %>
+
+                  <div>
+                    <h3 class="h6 fw-bold m-0 text-white"><%= album.title %></h3>
+                  </div>
+                </div>
+
+                <!-- Calificación de Álbum (0-5 Estrellas) -->
+                <div class="ms-3">
+                  <form action="/albums/<%= album.id %>/rate" method="POST" class="d-flex align-items-center gap-2 rate-form">
+                    <select class="form-select form-select-sm bg-dark border-secondary text-warning fw-bold py-1" style="width: 100px;" name="rating" aria-label="Calificación de 0 a 5 estrellas para <%= album.title %>">
+                      <option value="0" <%= album.user_rating === 0 ? 'selected' : '' %>>Sin nota</option>
+                      <option value="1" <%= album.user_rating === 1 ? 'selected' : '' %>>1 ★</option>
+                      <option value="2" <%= album.user_rating === 2 ? 'selected' : '' %>>2 ★★</option>
+                      <option value="3" <%= album.user_rating === 3 ? 'selected' : '' %>>3 ★★★</option>
+                      <option value="4" <%= album.user_rating === 4 ? 'selected' : '' %>>4 ★★★★</option>
+                      <option value="5" <%= album.user_rating === 5 ? 'selected' : '' %>>5 ★★★★★</option>
+                    </select>
+                    <button type="submit" class="btn btn-outline-warning btn-sm py-1 px-2 border-secondary-subtle" aria-label="Guardar calificación para <%= album.title %>">
+                      <i class="bi bi-check-lg"></i>
+                    </button>
+                  </form>
+                </div>
+              </div>
+
+              <!-- Tracks -->
+              <div id="collapse-<%= album.id %>" class="accordion-collapse collapse" aria-labelledby="heading-<%= album.id %>" data-bs-parent="#discographyAccordion">
+                <div class="accordion-body bg-dark bg-opacity-25 px-4 py-2 border-top border-secondary border-opacity-10">
+                  <table class="table table-dark table-hover table-borderless align-middle m-0 small">
+                    <thead>
+                      <tr class="text-secondary border-bottom border-secondary border-opacity-10">
+                        <th scope="col" style="width: 50px;">#</th>
+                        <th scope="col">Título</th>
+                        <th scope="col" class="text-end" style="width: 80px;"><i class="bi bi-clock"></i></th>
+                        <th scope="col" class="text-center" style="width: 80px;"><i class="bi bi-heart"></i></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% album.tracks.forEach(track => { %>
+                        <tr class="hover-track-row">
+                          <td class="text-secondary"><%= track.track_number %></td>
+                          <td class="fw-medium text-white-50"><%= track.title %></td>
+                          <td class="text-end text-secondary"><%= formatDuration(track.duration_ms) %></td>
+                          <td class="text-center">
+                            <form action="/tracks/<%= track.id %>/favorite" method="POST" class="favorite-form">
+                              <button type="submit" class="btn btn-link p-0 border-0 text-decoration-none" aria-label="<%= track.is_favorite === 1 ? 'Quitar de favoritos' : 'Agregar a favoritos' %>">
+                                <% if (track.is_favorite === 1) { %>
+                                  <i class="bi bi-heart-fill text-danger fs-5 animate-pop"></i>
+                                <% } else { %>
+                                  <i class="bi bi-heart text-secondary fs-5 hover-heart"></i>
+                                <% } %>
+                              </button>
+                            </form>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<style>
+  .accordion-button::after {
+    filter: invert(1);
+  }
+  .hover-track-row:hover {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+  }
+  .hover-heart:hover {
+    color: #dc3545 !important;
+    transform: scale(1.15);
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+  .animate-pop {
+    display: inline-block;
+    animation: pop 0.3s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+  }
+  .accordion-button:not(.collapsed) {
+    background-color: transparent;
+    color: white;
+  }
+  
+  /* Scrollbar estético para el div de la Bio */
+  .style-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .style-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+  }
+  .style-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+  }
+  .style-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-color);
+  }
+
+  /* Galería de fotos interactiva */
+  .cursor-zoom {
+    cursor: zoom-in;
+  }
+  .gallery-thumbnail-wrapper img {
+    transition: opacity 0.2s ease;
+  }
+  .gallery-thumbnail-wrapper:hover img {
+    opacity: 1 !important;
+  }
+  /* Estilizar la tira de miniaturas */
+  #galleryThumbnails::-webkit-scrollbar {
+    height: 6px;
+  }
+  #galleryThumbnails::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+  }
+  #galleryThumbnails::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+  }
+  #galleryThumbnails::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-color);
+  }
+</style>
+
+<script>
+  // AJAX Favoritos
+  document.querySelectorAll('.favorite-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const actionUrl = this.getAttribute('action');
+      const button = this.querySelector('button');
+      
+      try {
+        const response = await fetch(actionUrl, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          if (result.is_favorite === 1) {
+            button.setAttribute('aria-label', 'Quitar de favoritos');
+            button.innerHTML = '<i class="bi bi-heart-fill text-danger fs-5 animate-pop"></i>';
+          } else {
+            button.setAttribute('aria-label', 'Agregar a favoritos');
+            button.innerHTML = '<i class="bi bi-heart text-secondary fs-5 hover-heart"></i>';
+          }
+        }
+      } catch (err) {
+        console.error('Error al actualizar favorito:', err);
+        this.submit();
+      }
+    });
+  });
+
+  // AJAX Calificaciones
+  document.querySelectorAll('.rate-form').forEach(form => {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const actionUrl = this.getAttribute('action');
+      const select = this.querySelector('select');
+      const rating = select.value;
+      const button = this.querySelector('button');
+      
+      const originalHtml = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+
+      try {
+        const response = await fetch(actionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json'
+          },
+          body: new URLSearchParams({ rating })
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+          button.innerHTML = '<i class="bi bi-check-lg text-danger"></i>';
+          setTimeout(() => {
+            button.innerHTML = originalHtml;
+            button.disabled = false;
+          }, 1500);
+        }
+      } catch (err) {
+        console.error('Error al calificar:', err);
+        this.submit();
+      }
+    });
+  });
+
+  // Cambiar visor de imagen en la galería interactiva
+  function selectGalleryImage(imgUrl, thumbElement) {
+    const mainImg = document.getElementById('main-gallery-img');
+    const mainLink = document.getElementById('main-gallery-link');
+    if (!mainImg || !mainLink) return;
+
+    mainImg.style.opacity = '0';
+    setTimeout(() => {
+      mainImg.src = imgUrl;
+      mainLink.href = imgUrl;
+      mainImg.style.opacity = '1';
+    }, 150);
+
+    const wrappers = document.querySelectorAll('.gallery-thumbnail-wrapper');
+    wrappers.forEach(w => {
+      w.classList.remove('border-danger', 'border-2', 'shadow');
+      w.classList.add('border-secondary', 'border-opacity-25');
+      const img = w.querySelector('img');
+      if (img) img.classList.remove('opacity-100');
+      if (img) img.classList.add('opacity-70');
+    });
+
+    thumbElement.classList.add('border-danger', 'border-2', 'shadow');
+    thumbElement.classList.remove('border-secondary', 'border-opacity-25');
+    const activeImg = thumbElement.querySelector('img');
+    if (activeImg) {
+      activeImg.classList.add('opacity-100');
+      activeImg.classList.remove('opacity-70');
+    }
+  }
+
+  // Navegación por teclado (Flechas Izquierda / Derecha)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      const wrappers = Array.from(document.querySelectorAll('.gallery-thumbnail-wrapper'));
+      if (wrappers.length <= 1) return;
+
+      // Encontrar índice activo
+      const activeIdx = wrappers.findIndex(w => w.classList.contains('border-danger'));
+      if (activeIdx === -1) return;
+
+      // Prevenir scroll de página
+      e.preventDefault();
+
+      let nextIdx;
+      if (e.key === 'ArrowRight') {
+        nextIdx = (activeIdx + 1) % wrappers.length;
+      } else {
+        nextIdx = (activeIdx - 1 + wrappers.length) % wrappers.length;
+      }
+
+      const nextThumb = wrappers[nextIdx];
+      if (nextThumb) {
+        nextThumb.click();
+        nextThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+      }
+    }
+  });
+</script>
+
+<%- include('partials/footer') %>

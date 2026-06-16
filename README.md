@@ -1,0 +1,112 @@
+# 🎵 MusicTracker — Tu Colección Musical Personal
+
+**MusicTracker** es una aplicación de escritorio/servidor web construida con Node.js, Express y SQLite que te permite realizar un seguimiento personalizado de tus artistas, álbumes y canciones favoritas. Consigue toda la información de forma gratuita mediante técnicas avanzadas de scraping web desde **Last.fm en español**, incluyendo biografías completas, discografías y portadas de discos.
+
+---
+
+## 🎨 Características Principales
+
+*   **🕵️ Scraping de Last.fm:** Obtiene biografías completas en español, discografías y listados de tracks sin necesidad de usar APIs de terceros ni tokens.
+*   **💾 Almacenamiento Local de Imágenes:** Descarga automáticamente fotos de artistas y portadas de álbumes a máxima resolución (`ar0`) en la carpeta pública local, evitando enlaces rotos externos.
+*   **🖼️ Galería Interactiva:** En la sección de detalles de cada artista se visualizan hasta 40 fotos en una galería interactiva con tira de miniaturas, visor principal de alta resolución y navegación por teclado (flechas `←` y `→`).
+*   **🗄️ SQLite local:** Utiliza la base de datos `better-sqlite3` para un rendimiento asombroso y transacciones ACID que garantizan la consistencia de datos durante la importación.
+*   **❤️ Calificaciones y Favoritos:** Permite puntuar álbumes (0 a 5 estrellas) y marcar pistas como favoritas de forma asíncrona (AJAX).
+*   **🔴 UI Premium en Modo Oscuro:** Interfaz moderna con Bootstrap 5.3, glassmorphism, sombras sutiles y acentos en rojo marca.
+
+---
+
+## 🛠️ Stack Tecnológico
+
+*   **Backend:** Node.js, Express.js
+*   **Base de Datos:** SQLite (`better-sqlite3`)
+*   **Scraping:** Axios, Cheerio
+*   **Frontend:** HTML5, EJS, Bootstrap 5.3 (Modo Oscuro), Bootstrap Icons
+
+---
+
+## 📁 Estructura del Proyecto
+
+*   **[app.js](file:///home/juan/Documentos/Dev/Apps/MusicTracker/app.js):** Punto de entrada del servidor Express.
+*   **[db.js](file:///home/juan/Documentos/Dev/Apps/MusicTracker/db.js):** Inicialización del motor SQLite y definición del esquema de tablas.
+*   **`services/`**
+    *   **[services/lastfm.js](file:///home/juan/Documentos/Dev/Apps/MusicTracker/services/lastfm.js):** Scraper asíncrono para Last.fm (perfil, búsqueda, wiki e imágenes).
+    *   **[services/imageDownloader.js](file:///home/juan/Documentos/Dev/Apps/MusicTracker/services/imageDownloader.js):** Descargador y limpiador de archivos físicos de imágenes.
+*   **`routes/`**
+    *   **[routes/index.js](file:///home/juan/Documentos/Dev/Apps/MusicTracker/routes/index.js):** Ruta del Dashboard.
+    *   **[routes/artists.js](file:///home/juan/Documentos/Dev/Apps/MusicTracker/routes/artists.js):** Rutas de búsqueda, importación recursiva, estado de seguimiento y notas.
+    *   **[routes/albums.js](file:///home/juan/Documentos/Dev/Apps/MusicTracker/routes/albums.js):** Ruta de calificaciones de álbumes.
+    *   **[routes/tracks.js](file:///home/juan/Documentos/Dev/Apps/MusicTracker/routes/tracks.js):** Ruta de favoritos de canciones.
+*   **`views/`**
+    *   **[views/index.ejs](file:///home/juan/Documentos/Dev/Apps/MusicTracker/views/index.ejs):** Vista principal con la rejilla responsiva de artistas seguidos.
+    *   **[views/artist.ejs](file:///home/juan/Documentos/Dev/Apps/MusicTracker/views/artist.ejs):** Vista del perfil detallado del artista con su biografía, galería interactiva y discografía.
+    *   **[views/search.ejs](file:///home/juan/Documentos/Dev/Apps/MusicTracker/views/search.ejs):** Vista del buscador de artistas en Last.fm.
+
+---
+
+## ⚙️ Instalación y Uso
+
+1.  **Clonar el repositorio:**
+    ```bash
+    git clone <url-del-repositorio>
+    cd MusicTracker
+    ```
+
+2.  **Instalar dependencias:**
+    ```bash
+    npm install
+    ```
+
+3.  **Configurar variables de entorno:**
+    Crear un archivo `.env` en el directorio raíz:
+    ```text
+    PORT=3000
+    ```
+
+4.  **Iniciar en modo de desarrollo:**
+    ```bash
+    npm run dev
+    ```
+
+5.  **Acceder a la aplicación:**
+    Abrir en el navegador: `http://localhost:3000`
+
+---
+
+## 🗄️ Esquema de la Base de Datos
+
+```mermaid
+erDiagram
+    artists {
+        text id PK "Slug de Last.fm"
+        text name "Nombre del Artista"
+        text image "Ruta de foto principal local"
+        text images "JSON array de rutas locales de galería"
+        text genres "JSON array de géneros"
+        integer popularity "Popularidad"
+        text status "Estado de seguimiento"
+        text notes "Biografía e información adicional"
+        datetime added_at "Fecha de importación"
+    }
+    albums {
+        text id PK "Slug del Álbum"
+        text artist_id FK "artists.id"
+        text title "Título del Álbum"
+        text cover_image "Ruta local de portada"
+        real user_rating "Calificación 0-5"
+    }
+    tracks {
+        text id PK "Id autogenerado"
+        text album_id FK "albums.id"
+        text title "Nombre de pista"
+        integer duration_ms "Duración en ms"
+        integer track_number "Número de track"
+        integer is_favorite "Favorito (0 o 1)"
+    }
+    
+    artists ||--o{ albums : "tiene"
+    albums ||--o{ tracks : "contiene"
+```
+
+---
+
+Desarrollado con ❤️ por **Juan Gabriel Maioli**.
