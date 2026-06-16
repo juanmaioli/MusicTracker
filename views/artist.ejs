@@ -116,7 +116,7 @@ function formatDuration(ms) {
                   </button>
 
                   <% if (album.cover_image) { %>
-                    <img src="<%= album.cover_image %>" alt="Portada de <%= album.title %>" class="rounded object-fit-cover shadow-sm" style="width: 50px; height: 50px;">
+                    <img src="<%= album.cover_image %>" alt="Portada de <%= album.title %>" class="rounded object-fit-cover shadow-sm album-cover-clickable" style="width: 50px; height: 50px; cursor: zoom-in;" data-album-title="<%= album.title %>" data-cover-url="<%= album.cover_image %>" title="Ver portada en tamaño completo">
                   <% } else { %>
                     <div class="rounded bg-secondary d-flex align-items-center justify-content-center text-dark shadow-sm" style="width: 50px; height: 50px;">
                       <i class="bi bi-music-note"></i>
@@ -415,6 +415,45 @@ function formatDuration(ms) {
       }
     }
   });
+
+  // Modal para visualización de portadas de álbumes
+  document.addEventListener('DOMContentLoaded', () => {
+    const coverModalElement = document.getElementById('coverModal');
+    if (coverModalElement) {
+      const coverModal = new bootstrap.Modal(coverModalElement);
+      const coverModalImg = document.getElementById('coverModalImg');
+      const coverModalLabel = document.getElementById('coverModalLabel');
+
+      document.querySelectorAll('.album-cover-clickable').forEach(img => {
+        img.addEventListener('click', (e) => {
+          e.stopPropagation(); // Evitar que el clic active el colapsable del acordeón
+          const coverUrl = img.dataset.coverUrl;
+          const albumTitle = img.dataset.albumTitle;
+          
+          if (coverUrl) {
+            coverModalImg.src = coverUrl;
+            coverModalLabel.innerText = albumTitle;
+            coverModal.show();
+          }
+        });
+      });
+    }
+  });
 </script>
+
+<!-- Modal de Visualización de Portada (Mega Resolución) -->
+<div class="modal fade" id="coverModal" tabindex="-1" aria-labelledby="coverModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark border-secondary border-opacity-25 rounded-4 shadow-lg text-white">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 py-3">
+        <h5 class="modal-title fw-bold" id="coverModalLabel">Portada de Álbum</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body text-center p-3">
+        <img id="coverModalImg" src="" alt="Portada ampliada" class="img-fluid rounded shadow" style="max-height: 70vh; object-fit: contain; width: 100%;">
+      </div>
+    </div>
+  </div>
+</div>
 
 <%- include('partials/footer') %>

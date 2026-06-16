@@ -65,6 +65,18 @@ router.post('/add/:id', async (req, res) => {
     // 2. Obtener álbumes
     const albumsData = await lastfm.getArtistAlbums(artistId);
 
+    // Obtener calificaciones por lote de MusicBrainz
+    const ratingsMap = await lastfm.getMusicBrainzRatings(artistData.name);
+
+    // Función auxiliar para normalizar nombres y realizar coincidencias
+    const cleanName = (str) => {
+      if (!str) return '';
+      return str.toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
     // 3. Obtener canciones de cada álbum (secuencialmente con un leve delay)
     const albumsWithTracks = [];
     for (const album of albumsData) {
@@ -75,6 +87,10 @@ router.post('/add/:id', async (req, res) => {
       if (localAlbumCover) {
         album.cover_image = localAlbumCover;
       }
+
+      // Asignar calificación de MusicBrainz
+      const cleanedTitle = cleanName(album.title);
+      album.user_rating = ratingsMap[cleanedTitle] || 0;
 
       albumsWithTracks.push({ album, tracks });
       // Espera de 300ms entre álbumes
@@ -88,8 +104,8 @@ router.post('/add/:id', async (req, res) => {
     `);
 
     const insertAlbum = db.prepare(`
-      INSERT INTO albums (id, artist_id, title, cover_image, release_year)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
+      VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     const insertTrack = db.prepare(`
@@ -115,7 +131,8 @@ router.post('/add/:id', async (req, res) => {
           artist.id,
           album.title,
           album.cover_image,
-          album.release_year
+          album.release_year,
+          album.user_rating || 0
         );
 
         for (const track of tracks) {

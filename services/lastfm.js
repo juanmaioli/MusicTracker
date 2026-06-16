@@ -280,10 +280,62 @@ async function getAlbumTracks(artistSlug, albumSlug) {
   }
 }
 
+// 5. Obtener calificaciones de álbumes de MusicBrainz por lote
+async function getMusicBrainzRatings(artistName) {
+  const ratingsMap = {};
+  try {
+    // 1. Buscar el ID del artista en MusicBrainz
+    const searchUrl = `https://musicbrainz.org/ws/2/artist?query="${encodeURIComponent(artistName)}"&fmt=json`;
+    const { data: artistData } = await http.get(searchUrl, {
+      headers: { 'User-Agent': 'MusicTracker/1.3.0 ( juanmaioli@gmail.com )' }
+    });
+
+    const artists = artistData.artists;
+    if (!artists || artists.length === 0) {
+      return ratingsMap;
+    }
+
+    const artistId = artists[0].id;
+
+    // Respetar el Rate Limit de 1 req/sec de MusicBrainz
+    await sleep(1000);
+
+    // 2. Obtener todos los release-groups del artista con ratings
+    const rgUrl = `https://musicbrainz.org/ws/2/release-group?artist=${artistId}&limit=100&inc=ratings&fmt=json`;
+    const { data: rgData } = await http.get(rgUrl, {
+      headers: { 'User-Agent': 'MusicTracker/1.3.0 ( juanmaioli@gmail.com )' }
+    });
+
+    const releaseGroups = rgData['release-groups'] || [];
+    
+    // Función auxiliar interna para normalizar nombres
+    const cleanName = (str) => {
+      if (!str) return '';
+      return str.toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
+    releaseGroups.forEach(rg => {
+      if (rg.title && rg.rating && rg.rating.value !== null) {
+        const cleanedTitle = cleanName(rg.title);
+        ratingsMap[cleanedTitle] = rg.rating.value;
+      }
+    });
+
+  } catch (error) {
+    console.error(`Error obteniendo ratings de MusicBrainz para "${artistName}":`, error.message);
+  }
+  return ratingsMap;
+}
+
 module.exports = {
   searchArtists,
   getArtistDetail,
   getArtistAlbums,
   getAlbumTracks,
+  getMusicBrainzRatings,
   sleep
 };
+
