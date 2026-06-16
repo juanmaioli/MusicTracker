@@ -27,8 +27,8 @@ router.get('/:id', (req, res) => {
   artist.genresList = artist.genres ? JSON.parse(artist.genres) : [];
   artist.imagesList = artist.images ? JSON.parse(artist.images) : [];
 
-  // Obtener álbumes
-  const albums = db.prepare('SELECT * FROM albums WHERE artist_id = ?').all(artistId);
+  // Obtener álbumes ordenados por año ascendente (dejando nulos al final)
+  const albums = db.prepare('SELECT * FROM albums WHERE artist_id = ? ORDER BY release_year IS NULL, release_year ASC').all(artistId);
 
   // Obtener tracks de los álbumes
   for (const album of albums) {

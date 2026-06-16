@@ -1,5 +1,14 @@
 <%- include('partials/header') %>
 
+<style>
+  .artist-link {
+    transition: color 0.15s ease-in-out;
+  }
+  .artist-link:hover {
+    color: var(--brand-color) !important;
+  }
+</style>
+
 <div class="row mb-5">
   <div class="col-lg-8 mx-auto text-center">
     <h1 class="display-5 fw-extrabold mb-3"><i class="bi bi-search text-danger me-2"></i>Buscar Artistas en <span class="text-gradient">Last.fm</span></h1>
@@ -43,7 +52,12 @@
           </div>
           <div class="card-body d-flex flex-column justify-content-between p-4">
             <div>
-              <h2 class="card-title h4 fw-bold mb-3"><%= artist.name %></h2>
+              <h2 class="card-title h4 fw-bold mb-3">
+                <a href="https://www.last.fm/es/music/<%= artist.id %>" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none artist-link d-inline-flex align-items-center gap-2">
+                  <%= artist.name %>
+                  <i class="bi bi-box-arrow-up-right text-secondary" style="font-size: 0.75rem;" aria-hidden="true"></i>
+                </a>
+              </h2>
             </div>
             
             <form action="/artists/add/<%= artist.id %>" method="POST" class="import-form">
