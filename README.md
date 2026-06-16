@@ -10,7 +10,7 @@
 *   **💾 Almacenamiento Local de Imágenes:** Descarga automáticamente fotos de artistas y portadas de álbumes a máxima resolución (`ar0`) en la carpeta pública local, evitando enlaces rotos externos.
 *   **🖼️ Galería Interactiva:** En la sección de detalles de cada artista se visualizan hasta 40 fotos en una galería interactiva con tira de miniaturas, visor principal de alta resolución y navegación por teclado (flechas `←` y `→`).
 *   **🗄️ SQLite local:** Utiliza la base de datos `better-sqlite3` para un rendimiento asombroso y transacciones ACID que garantizan la consistencia de datos durante la importación.
-*   **❤️ Calificaciones y Favoritos:** Permite puntuar álbumes (0 a 5 estrellas) y marcar pistas como favoritas de forma asíncrona (AJAX).
+*   **⭐ Calificación Interactiva y Favoritos:** Permite puntuar álbumes (0 a 5 estrellas) de forma interactiva con efecto hover estilo ShowTracker, y marcar pistas como favoritas mediante solicitudes asíncronas (AJAX).
 *   **🔴 UI Premium en Modo Oscuro:** Interfaz moderna con Bootstrap 5.3, glassmorphism, sombras sutiles y acentos en rojo marca.
 
 ---
@@ -92,6 +92,7 @@ erDiagram
         text artist_id FK "artists.id"
         text title "Título del Álbum"
         text cover_image "Ruta local de portada"
+        integer release_year "Año de lanzamiento"
         real user_rating "Calificación 0-5"
     }
     tracks {
@@ -109,4 +110,14 @@ erDiagram
 
 ---
 
+## 🚀 Historial de Versiones
+
+### v1.2.0 (Actual)
+*   **⭐ Calificación Interactiva:** Calificación de álbumes mediante un visor de estrellas interactivo con efectos de hover (guardado instantáneo vía AJAX, estilo *ShowTracker*).
+*   **📅 Año de Lanzamiento:** Inclusión del año de lanzamiento de cada álbum al lado de su título en la discografía (extraído automáticamente de Last.fm).
+*   **🔍 Búsqueda Optimizada:** Autofoco automático en la caja de texto de búsqueda al abrir la pantalla para agilizar el flujo de uso.
+
+---
+
 Desarrollado con ❤️ por **Juan Gabriel Maioli**.
+

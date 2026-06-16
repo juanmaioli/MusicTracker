@@ -124,25 +124,20 @@ function formatDuration(ms) {
                   <% } %>
 
                   <div>
-                    <h3 class="h6 fw-bold m-0 text-white"><%= album.title %></h3>
+                    <h3 class="h6 fw-bold m-0 text-white"><%= album.title %> <%= album.release_year ? `· ${album.release_year}` : '' %></h3>
                   </div>
                 </div>
 
-                <!-- Calificación de Álbum (0-5 Estrellas) -->
-                <div class="ms-3">
-                  <form action="/albums/<%= album.id %>/rate" method="POST" class="d-flex align-items-center gap-2 rate-form">
-                    <select class="form-select form-select-sm bg-dark border-secondary text-warning fw-bold py-1" style="width: 100px;" name="rating" aria-label="Calificación de 0 a 5 estrellas para <%= album.title %>">
-                      <option value="0" <%= album.user_rating === 0 ? 'selected' : '' %>>Sin nota</option>
-                      <option value="1" <%= album.user_rating === 1 ? 'selected' : '' %>>1 ★</option>
-                      <option value="2" <%= album.user_rating === 2 ? 'selected' : '' %>>2 ★★</option>
-                      <option value="3" <%= album.user_rating === 3 ? 'selected' : '' %>>3 ★★★</option>
-                      <option value="4" <%= album.user_rating === 4 ? 'selected' : '' %>>4 ★★★★</option>
-                      <option value="5" <%= album.user_rating === 5 ? 'selected' : '' %>>5 ★★★★★</option>
-                    </select>
-                    <button type="submit" class="btn btn-outline-warning btn-sm py-1 px-2 border-secondary-subtle" aria-label="Guardar calificación para <%= album.title %>">
-                      <i class="bi bi-check-lg"></i>
-                    </button>
-                  </form>
+                <!-- Calificación de Álbum interactiva (Estilo ShowTracker) -->
+                <div class="ms-3 d-flex align-items-center gap-2">
+                  <div class="star-rating d-flex align-items-center gap-1 fs-5" data-album-id="<%= album.id %>" data-rating="<%= album.user_rating %>" style="user-select: none;">
+                    <% for (let i = 1; i <= 5; i++) { %>
+                      <span class="star px-1" data-value="<%= i %>" style="cursor: pointer; font-size: 1.25rem; transition: transform 0.1s ease, color 0.1s ease; color: <%= i <= album.user_rating ? '#ffc107' : '#6c757d' %>;" title="Calificar con <%= i %> estrella<%= i > 1 ? 's' : '' %>">
+                        <%= i <= album.user_rating ? '★' : '☆' %>
+                      </span>
+                    <% } %>
+                  </div>
+                  <span class="save-status-indicator small" id="status-<%= album.id %>" style="min-width: 18px; height: 18px; display: inline-block;"></span>
                 </div>
               </div>
 
@@ -291,41 +286,74 @@ function formatDuration(ms) {
     });
   });
 
-  // AJAX Calificaciones
-  document.querySelectorAll('.rate-form').forEach(form => {
-    form.addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const actionUrl = this.getAttribute('action');
-      const select = this.querySelector('select');
-      const rating = select.value;
-      const button = this.querySelector('button');
-      
-      const originalHtml = button.innerHTML;
-      button.disabled = true;
-      button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+  // Manejar calificación interactiva por estrellas de álbumes (Estilo ShowTracker)
+  document.querySelectorAll('.star-rating').forEach(container => {
+    const stars = container.querySelectorAll('.star');
+    const albumId = container.dataset.albumId;
+    const statusIndicator = document.getElementById(`status-${albumId}`);
 
-      try {
-        const response = await fetch(actionUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-          },
-          body: new URLSearchParams({ rating })
+    // Efecto hover al pasar el mouse
+    stars.forEach(star => {
+      star.addEventListener('mouseenter', () => {
+        const val = parseInt(star.dataset.value);
+        stars.forEach((s, idx) => {
+          s.innerText = (idx < val) ? '★' : '☆';
+          s.style.color = (idx < val) ? '#ffc107' : '#6c757d';
         });
-        const result = await response.json();
+      });
+    });
+
+    container.addEventListener('mouseleave', () => {
+      const currentRating = parseFloat(container.dataset.rating) || 0;
+      stars.forEach((s, idx) => {
+        s.innerText = (idx < currentRating) ? '★' : '☆';
+        s.style.color = (idx < currentRating) ? '#ffc107' : '#6c757d';
+      });
+    });
+
+    // Evento de clic para calificar
+    stars.forEach(star => {
+      star.addEventListener('click', async () => {
+        const val = parseInt(star.dataset.value);
         
-        if (result.success) {
-          button.innerHTML = '<i class="bi bi-check-lg text-danger"></i>';
-          setTimeout(() => {
-            button.innerHTML = originalHtml;
-            button.disabled = false;
-          }, 1500);
+        if (statusIndicator) {
+          statusIndicator.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
         }
-      } catch (err) {
-        console.error('Error al calificar:', err);
-        this.submit();
-      }
+
+        try {
+          const response = await fetch(`/albums/${albumId}/rate`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+              'Accept': 'application/json'
+            },
+            body: new URLSearchParams({ rating: val })
+          });
+          
+          const result = await response.json();
+          if (result.success) {
+            container.dataset.rating = val;
+            
+            // Actualizar estrellas visualmente
+            stars.forEach((s, idx) => {
+              s.innerText = (idx < val) ? '★' : '☆';
+              s.style.color = (idx < val) ? '#ffc107' : '#6c757d';
+            });
+
+            if (statusIndicator) {
+              statusIndicator.innerHTML = '<i class="bi bi-check-lg text-danger animate-pop"></i>';
+              setTimeout(() => {
+                statusIndicator.innerHTML = '';
+              }, 1500);
+            }
+          }
+        } catch (err) {
+          console.error('Error al calificar el álbum:', err);
+          if (statusIndicator) {
+            statusIndicator.innerHTML = '<i class="bi bi-x-lg text-danger"></i>';
+          }
+        }
+      });
     });
   });
 

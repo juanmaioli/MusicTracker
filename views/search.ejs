@@ -6,7 +6,7 @@
     <p class="text-secondary mb-4">Buscá e importá biografías completas en español y discografías directamente desde Last.fm de forma gratuita.</p>
     
     <form action="/artists/search" method="GET" class="d-flex gap-2">
-      <input type="text" name="q" class="form-control form-control-lg bg-dark border-secondary text-white rounded-pill px-4" placeholder="Ej: Soda Stereo, Spinetta, Linkin Park..." value="<%= query %>" required aria-label="Nombre del artista">
+      <input type="text" name="q" class="form-control form-control-lg bg-dark border-secondary text-white rounded-pill px-4" placeholder="Ej: Soda Stereo, Spinetta, Linkin Park..." value="<%= query %>" required aria-label="Nombre del artista" autofocus>
       <button class="btn btn-spotify btn-lg px-4" type="submit"><i class="bi bi-search me-2"></i>Buscar</button>
     </form>
   </div>

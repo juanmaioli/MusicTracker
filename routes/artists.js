@@ -88,8 +88,8 @@ router.post('/add/:id', async (req, res) => {
     `);
 
     const insertAlbum = db.prepare(`
-      INSERT INTO albums (id, artist_id, title, cover_image)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO albums (id, artist_id, title, cover_image, release_year)
+      VALUES (?, ?, ?, ?, ?)
     `);
 
     const insertTrack = db.prepare(`
@@ -114,7 +114,8 @@ router.post('/add/:id', async (req, res) => {
           album.id,
           artist.id,
           album.title,
-          album.cover_image
+          album.cover_image,
+          album.release_year
         );
 
         for (const track of tracks) {

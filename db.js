@@ -35,9 +35,20 @@ db.exec(`
     artist_id TEXT NOT NULL,
     title TEXT NOT NULL,
     cover_image TEXT,
+    release_year INTEGER,
     user_rating REAL DEFAULT 0,
     FOREIGN KEY (artist_id) REFERENCES artists(id) ON DELETE CASCADE
   );
+`);
+
+// Asegurar compatibilidad para bases de datos existentes añadiendo la columna release_year
+try {
+  db.exec('ALTER TABLE albums ADD COLUMN release_year INTEGER;');
+} catch (e) {
+  // Ignorar si la columna ya existe
+}
+
+db.exec(`
 
   CREATE TABLE IF NOT EXISTS tracks (
     id TEXT PRIMARY KEY,

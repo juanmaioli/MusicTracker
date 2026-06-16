@@ -212,6 +212,11 @@ async function getArtistAlbums(artistSlug) {
         const title = $(el).find('.link-block-target').text().trim() || albumSlug.replace(/\+/g, ' ');
         let cover = $(el).find('.cover-art img').attr('src') || $(el).find('img').attr('src');
 
+        // Extraer texto auxiliar de fecha y buscar el año de lanzamiento (4 dígitos)
+        const auxText = $(el).find('.resource-list--release-list-item-aux-text').not('.resource-list--release-list-item-listeners').text().trim();
+        const match = auxText.match(/\b(19\d\d|20\d\d)\b/);
+        const releaseYear = match ? parseInt(match[1]) : null;
+
         // Obtener portada del álbum en su formato y tamaño original
         cover = convertToOriginalImage(cover);
 
@@ -220,7 +225,8 @@ async function getArtistAlbums(artistSlug) {
           albums.push({
             id: albumSlug, // El slug actúa como ID
             title,
-            cover_image: cover || null
+            cover_image: cover || null,
+            release_year: releaseYear
           });
         }
       }
