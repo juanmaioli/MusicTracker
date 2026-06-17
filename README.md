@@ -111,7 +111,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.10.1 (Actual)
+### v1.10.2 (Actual)
+*   **🐛 Corrección en Descarga de Imágenes:** Incremento del retardo entre descargas consecutivas de imágenes de la galería del artista a 1 segundo para prevenir bloqueos por tasa de peticiones y errores de timeout (`timeout of 10000ms exceeded`).
+
+### v1.10.1
 *   **🔄 Apertura Híbrida de Spotify:** Refinación del botón de Spotify para que intente abrir la aplicación nativa local (`spotify:search:...`) con fallback automático a la versión web en una nueva pestaña si el navegador no pierde el foco en 1.2 segundos.
 
 ### v1.10.0

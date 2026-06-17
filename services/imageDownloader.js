@@ -120,8 +120,8 @@ async function saveArtistGallery(urls, artistSlug) {
     if (success) {
       localPaths.push(`/images/artists/${filename}`);
     }
-    // Breve delay de 50ms para no saturar al descargar muchas fotos seguidas
-    await new Promise(r => setTimeout(r, 50));
+    // Esperar 1 segundo entre descargas para no saturar al servidor y evitar timeouts
+    await new Promise(r => setTimeout(r, 1000));
   }
 
   return localPaths;
