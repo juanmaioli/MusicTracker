@@ -152,7 +152,7 @@ function formatBiography(text) {
       <% } else { %>
         <div class="d-flex flex-column gap-3">
           <% albums.forEach((album, index) => { %>
-            <div class="d-flex align-items-center justify-content-between p-3 bg-dark bg-opacity-50 text-white border border-secondary border-opacity-25 rounded-4 hover-album-row" style="transition: background-color 0.2s ease;">
+            <div id="album-row-<%= album.id %>" class="d-flex align-items-center justify-content-between p-3 bg-dark bg-opacity-50 text-white border border-secondary border-opacity-25 rounded-4 hover-album-row" style="transition: background-color 0.2s ease, opacity 0.3s ease, transform 0.3s ease;">
               <div class="d-flex align-items-center gap-3 flex-grow-1">
                 <% if (album.cover_image) { %>
                   <img src="<%= album.cover_image %>" alt="Portada de <%= album.title %>" 
@@ -205,11 +205,12 @@ function formatBiography(text) {
                   <% } %>
                 </div>
                 <% if (!album.user_rating || album.user_rating === 0) { %>
-                  <form action="/artists/<%= artist.id %>/albums/<%= album.id %>/delete" method="POST" onsubmit="return confirm('¿Estás seguro de que querés borrar el álbum «<%= album.title %>»? Esta acción no se puede deshacer.');" class="m-0">
-                    <button type="submit" class="btn btn-link link-secondary p-0 hover-text-danger-link" title="Borrar álbum sin calificar" style="line-height: 1;">
-                      <i class="bi bi-trash3 fs-5"></i>
-                    </button>
-                  </form>
+                  <button type="button" class="btn btn-link link-secondary p-0 hover-text-danger-link delete-album-btn" 
+                          data-album-id="<%= album.id %>" 
+                          data-artist-id="<%= artist.id %>"
+                          title="Borrar álbum sin calificar" style="line-height: 1;">
+                    <i class="bi bi-trash3 fs-5"></i>
+                  </button>
                 <% } %>
               </div>
             </div>
@@ -575,6 +576,45 @@ function formatBiography(text) {
         syncBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Sincronizando...';
       });
     }
+    // Borrado asíncrono de álbumes sin calificar (sin confirmación y sin recargar)
+    document.querySelectorAll('.delete-album-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const albumId = btn.dataset.albumId;
+        const artistId = btn.dataset.artistId;
+        
+        try {
+          const response = await fetch(`/artists/${artistId}/albums/${albumId}/delete`, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+          const result = await response.json();
+          if (result.success) {
+            const row = document.getElementById(`album-row-${albumId}`);
+            if (row) {
+              row.style.opacity = '0';
+              row.style.transform = 'scale(0.95)';
+              setTimeout(() => {
+                row.remove();
+                
+                // Actualizar contador del badge
+                const badge = document.querySelector('.h3 .badge');
+                if (badge) {
+                  const currentCount = parseInt(badge.textContent, 10);
+                  if (!isNaN(currentCount) && currentCount > 0) {
+                    badge.textContent = currentCount - 1;
+                  }
+                }
+              }, 300);
+            }
+          }
+        } catch (err) {
+          console.error('Error al borrar álbum de forma asíncrona:', err);
+        }
+      });
+    });
   });
 </script>
 

@@ -265,10 +265,10 @@ router.post('/:id/albums/:albumId/delete', (req, res) => {
     // 2. Eliminar el álbum en la DB (el borrado en cascada se encarga de las canciones)
     db.prepare('DELETE FROM albums WHERE id = ? AND artist_id = ?').run(albumId, id);
 
-    res.redirect(`/artists/${id}`);
+    res.json({ success: true, albumId });
   } catch (error) {
     console.error('Error al borrar álbum individual:', error);
-    res.status(500).render('error', { message: 'Ocurrió un error al intentar borrar el álbum.', title: 'Error' });
+    res.status(500).json({ success: false, error: 'Ocurrió un error al intentar borrar el álbum.' });
   }
 });
 
