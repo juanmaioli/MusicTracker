@@ -171,6 +171,27 @@ async function getArtistDetail(artistSlug) {
       console.log('No se pudieron extraer géneros o imágenes del artista.');
     }
 
+    // Extraer metadatos adicionales del factbox de la Wiki
+    const metadata = {};
+    try {
+      $wiki('.factbox-heading').each((_, el) => {
+        const heading = $wiki(el).text().trim();
+        const nextUl = $wiki(el).next('ul');
+        if (nextUl.length > 0) {
+          const items = [];
+          nextUl.find('li').each((__, liEl) => {
+            items.push($wiki(liEl).text().trim().replace(/\s+/g, ' '));
+          });
+          metadata[heading] = items;
+        } else {
+          const value = $wiki(el).next().text().trim().replace(/\s+/g, ' ');
+          metadata[heading] = value;
+        }
+      });
+    } catch (metaErr) {
+      console.log('Error al extraer metadatos de la wiki:', metaErr.message);
+    }
+
     // Para la imagen grande, usamos el avatar y lo ampliamos a 500x500
     // (Buscamos la imagen del artista en la búsqueda si no viene en el wiki)
     let imageUrl = null;
@@ -196,7 +217,8 @@ async function getArtistDetail(artistSlug) {
       images: images,
       genres: genres.slice(0, 5),
       biography: fullBio,
-      popularity: 100
+      popularity: 100,
+      metadata: metadata
     };
   } catch (error) {
     console.error(`Error obteniendo detalles del artista ${artistSlug}:`, error.message);

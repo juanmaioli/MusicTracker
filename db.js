@@ -28,6 +28,13 @@ try {
   // Ignorar si la columna ya existe
 }
 
+// Asegurar compatibilidad para bases de datos existentes añadiendo la columna metadata
+try {
+  db.exec('ALTER TABLE artists ADD COLUMN metadata TEXT;');
+} catch (e) {
+  // Ignorar si la columna ya existe
+}
+
 db.exec(`
   CREATE TABLE IF NOT EXISTS albums (
     id TEXT PRIMARY KEY,

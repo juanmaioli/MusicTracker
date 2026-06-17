@@ -82,6 +82,67 @@ function formatBiography(text) {
         </div>
       </div>
 
+      <% 
+        let artistMetadata = {};
+        if (artist.metadata) {
+          try {
+            artistMetadata = JSON.parse(artist.metadata);
+          } catch(e) {
+            artistMetadata = {};
+          }
+        }
+        const hasMetadata = Object.keys(artistMetadata).length > 0;
+      %>
+
+      <% if (hasMetadata) { %>
+        <hr class="border-secondary border-opacity-25 my-3">
+        <div class="mb-4 text-start">
+          <h2 class="h6 fw-bold mb-3 d-flex align-items-center"><i class="bi bi-info-circle text-danger me-2"></i>Ficha Técnica</h2>
+          <div class="d-flex flex-column gap-2" style="font-size: 0.85rem;">
+            <% if (artistMetadata['Años de actividad']) { %>
+              <div>
+                <span class="text-secondary fw-semibold">Años de actividad:</span>
+                <span class="text-white-50 ms-1"><%= artistMetadata['Años de actividad'] %></span>
+              </div>
+            <% } %>
+            <% if (artistMetadata['Formado en']) { %>
+              <div>
+                <span class="text-secondary fw-semibold">Formado en:</span>
+                <span class="text-white-50 ms-1"><%= artistMetadata['Formado en'] %></span>
+              </div>
+            <% } %>
+            <% if (artistMetadata['Fecha de nacimiento']) { %>
+              <div>
+                <span class="text-secondary fw-semibold">Fecha de nacimiento:</span>
+                <span class="text-white-50 ms-1"><%= artistMetadata['Fecha de nacimiento'] %></span>
+              </div>
+            <% } %>
+            <% if (artistMetadata['Lugar de nacimiento']) { %>
+              <div>
+                <span class="text-secondary fw-semibold">Lugar de nacimiento:</span>
+                <span class="text-white-50 ms-1"><%= artistMetadata['Lugar de nacimiento'] %></span>
+              </div>
+            <% } %>
+            <% if (artistMetadata['Fallecido']) { %>
+              <div>
+                <span class="text-secondary fw-semibold">Fallecido:</span>
+                <span class="text-white-50 ms-1"><%= artistMetadata['Fallecido'] %></span>
+              </div>
+            <% } %>
+            <% if (artistMetadata['Miembros'] && Array.isArray(artistMetadata['Miembros']) && artistMetadata['Miembros'].length > 0) { %>
+              <div class="mt-2">
+                <span class="text-secondary fw-semibold">Miembros:</span>
+                <ul class="list-unstyled text-white-50 ms-2 mt-1 mb-0 ps-2" style="font-size: 0.8rem; border-left: 2px solid rgba(229, 9, 20, 0.4);">
+                  <% artistMetadata['Miembros'].forEach(member => { %>
+                    <li class="py-0.5"><%= member %></li>
+                  <% }) %>
+                </ul>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+
       <hr class="border-secondary border-opacity-25 my-3">
 
 

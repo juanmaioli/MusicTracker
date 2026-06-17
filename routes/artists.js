@@ -81,8 +81,8 @@ router.post('/add/:id', async (req, res) => {
 
     // 4. Inserción transaccional en SQLite
     const insertArtist = db.prepare(`
-      INSERT OR IGNORE INTO artists (id, name, image, images, genres, notes, popularity)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT OR IGNORE INTO artists (id, name, image, images, genres, notes, popularity, metadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertAlbum = db.prepare(`
@@ -103,7 +103,8 @@ router.post('/add/:id', async (req, res) => {
         JSON.stringify(artist.localImages || []),
         JSON.stringify(artist.genres),
         artist.biography, // Guardamos la biografía completa scrapeada en la columna de notas o biografía
-        artist.popularity
+        artist.popularity,
+        JSON.stringify(artist.metadata || {})
       );
 
       for (const item of data) {
@@ -380,8 +381,8 @@ router.post('/batch-add', async (req, res) => {
 
     // Guardar en SQLite transaccionalmente
     const insertArtist = db.prepare(`
-      INSERT OR IGNORE INTO artists (id, name, image, images, genres, notes, popularity)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT OR IGNORE INTO artists (id, name, image, images, genres, notes, popularity, metadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertAlbum = db.prepare(`
@@ -402,7 +403,8 @@ router.post('/batch-add', async (req, res) => {
         JSON.stringify(artist.localImages || []),
         JSON.stringify(artist.genres),
         artist.biography,
-        artist.popularity
+        artist.popularity,
+        JSON.stringify(artist.metadata || {})
       );
 
       for (const item of data) {
