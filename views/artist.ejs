@@ -174,8 +174,14 @@ function formatBiography(text) {
                   </div>
                 <% } %>
 
-                <div>
-                  <h3 class="h6 fw-bold m-0 text-white"><%= album.title %> <%= album.release_year ? `· ${album.release_year}` : '' %></h3>
+                <div class="album-cover-clickable cursor-zoom"
+                     data-album-title="<%= album.title %>" 
+                     data-album-year="<%= album.release_year || '' %>"
+                     data-album-rating="<%= album.user_rating || 0 %>"
+                     data-cover-url="<%= album.cover_image || '' %>" 
+                     data-tracks="<%= Buffer.from(JSON.stringify(album.tracks)).toString('base64') %>"
+                     title="Ver canciones y portada">
+                  <h3 class="h6 fw-bold m-0 text-white hover-underline"><%= album.title %> <%= album.release_year ? `· ${album.release_year}` : '' %></h3>
                 </div>
               </div>
 

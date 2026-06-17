@@ -349,4 +349,128 @@ router.post('/:id/delete', (req, res) => {
   res.redirect('/');
 });
 
+// Importación batch asíncrona de un artista por nombre
+router.post('/batch-add', async (req, res) => {
+  const { name } = req.body;
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ success: false, error: 'Nombre de artista vacío' });
+  }
+
+  try {
+    // 1. Buscar en Last.fm
+    const searchResults = await lastfm.searchArtists(name);
+    if (!searchResults || searchResults.length === 0) {
+      return res.status(404).json({ success: false, error: `No se encontró a "${name}" en Last.fm` });
+    }
+
+    const foundArtist = searchResults[0];
+    const artistId = foundArtist.id;
+
+    // 2. Verificar si ya existe en SQLite
+    const exists = db.prepare('SELECT id FROM artists WHERE id = ?').get(artistId);
+    if (exists) {
+      return res.json({ success: true, alreadyExists: true, name: foundArtist.name, id: artistId });
+    }
+
+    // 3. Importar artista completo (lógica idéntica a /add/:id)
+    const artistData = await lastfm.getArtistDetail(artistId);
+    
+    // Descargar imagen principal
+    const localArtistImage = await imageDownloader.saveArtistImage(artistData.image, artistId);
+    if (localArtistImage) {
+      artistData.image = localArtistImage;
+    }
+
+    // Descargar galería
+    const localArtistImages = await imageDownloader.saveArtistGallery(artistData.images, artistId);
+    artistData.localImages = localArtistImages;
+
+    // Descargar álbumes
+    const albumsData = await lastfm.getArtistAlbums(artistId);
+    const ratingsMap = await lastfm.getMusicBrainzRatings(artistData.name);
+
+    const cleanName = (str) => {
+      if (!str) return '';
+      return str.toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
+    // Obtener canciones de cada álbum secuencialmente
+    const albumsWithTracks = [];
+    for (const album of albumsData) {
+      const tracks = await lastfm.getAlbumTracks(artistId, album.id);
+      
+      const localAlbumCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
+      if (localAlbumCover) {
+        album.cover_image = localAlbumCover;
+      }
+
+      const cleanedTitle = cleanName(album.title);
+      album.user_rating = ratingsMap[cleanedTitle] || 0;
+
+      albumsWithTracks.push({ album, tracks });
+      await lastfm.sleep(300);
+    }
+
+    // Guardar en SQLite transaccionalmente
+    const insertArtist = db.prepare(`
+      INSERT INTO artists (id, name, image, images, genres, notes, popularity)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const insertAlbum = db.prepare(`
+      INSERT INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    const insertTrack = db.prepare(`
+      INSERT INTO tracks (id, album_id, title, duration_ms, track_number)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const addArtistTransaction = db.transaction((artist, data) => {
+      insertArtist.run(
+        artist.id,
+        artist.name,
+        artist.image,
+        JSON.stringify(artist.localImages || []),
+        JSON.stringify(artist.genres),
+        artist.biography,
+        artist.popularity
+      );
+
+      for (const item of data) {
+        const { album, tracks } = item;
+        insertAlbum.run(
+          album.id,
+          artist.id,
+          album.title,
+          album.cover_image,
+          album.release_year,
+          album.user_rating || 0
+        );
+
+        for (const track of tracks) {
+          insertTrack.run(
+            track.id,
+            album.id,
+            track.title,
+            track.duration_ms,
+            track.track_number
+          );
+        }
+      }
+    });
+
+    addArtistTransaction(artistData, albumsWithTracks);
+
+    res.json({ success: true, name: artistData.name, id: artistId });
+  } catch (err) {
+    console.error('Error en importación batch de:', name, err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
