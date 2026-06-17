@@ -184,10 +184,10 @@ function formatBiography(text) {
                   <h3 class="h6 fw-bold m-0 text-white hover-underline"><%= album.title %> <%= album.release_year ? `· ${album.release_year}` : '' %></h3>
                 </div>
 
-                <a href="https://open.spotify.com/search/<%= encodeURIComponent(artist.name + ' ' + album.title) %>" 
-                   target="_blank" 
+                <a href="#" 
                    class="hover-spotify-link d-inline-flex align-items-center" 
-                   title="Escuchar <%= album.title %> en Spotify">
+                   title="Escuchar <%= album.title %> en Spotify"
+                   onclick="event.preventDefault(); openSpotify('<%= artist.name %> <%= album.title %>');">
                   <i class="bi bi-spotify fs-5"></i>
                 </a>
               </div>
@@ -322,6 +322,31 @@ function formatBiography(text) {
     const minutes = Math.floor(ms / 60000);
     const seconds = Math.floor((ms % 60000) / 1000);
     return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+  }
+
+  // Intentar abrir la app nativa de Spotify con fallback a versión web
+  function openSpotify(query) {
+    const spotifyUri = `spotify:search:${encodeURIComponent(query)}`;
+    const webUrl = `https://open.spotify.com/search/${encodeURIComponent(query)}`;
+    const start = Date.now();
+
+    // 1. Redireccionar hacia el esquema URI de Spotify
+    window.location.href = spotifyUri;
+
+    // 2. Fallback a la web si pasan 1.2 segundos sin que la página pierda el foco
+    const fallbackTimer = setTimeout(() => {
+      if (!document.hidden && (Date.now() - start) < 2000) {
+        window.open(webUrl, '_blank');
+      }
+    }, 1200);
+
+    // 3. Cancelar fallback si el navegador se minimiza o pierde foco
+    const handleVisibility = () => {
+      if (document.hidden) {
+        clearTimeout(fallbackTimer);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility, { once: true });
   }
 
   // Cambiar visor de imagen en la galería interactiva
