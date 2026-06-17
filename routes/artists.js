@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const lastfm = require('../services/lastfm');
 const imageDownloader = require('../services/imageDownloader');
+const musicbrainz = require('../services/musicbrainz');
 
 // Buscar artistas en Last.fm
 router.get('/search', async (req, res) => {
@@ -62,39 +63,19 @@ router.post('/add/:id', async (req, res) => {
     const localArtistImages = await imageDownloader.saveArtistGallery(artistData.images, artistId);
     artistData.localImages = localArtistImages;
 
-    // 2. Obtener álbumes
-    const albumsData = await lastfm.getArtistAlbums(artistId);
+    // 2. Obtener álbumes y canciones desde MusicBrainz
+    const mbData = await musicbrainz.getArtistAlbumsAndTracks(artistData.name);
 
-    // Obtener calificaciones por lote de MusicBrainz
-    const ratingsMap = await lastfm.getMusicBrainzRatings(artistData.name);
-
-    // Función auxiliar para normalizar nombres y realizar coincidencias
-    const cleanName = (str) => {
-      if (!str) return '';
-      return str.toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    };
-
-    // 3. Obtener canciones de cada álbum (secuencialmente con un leve delay)
+    // 3. Descargar portadas y estructurar datos
     const albumsWithTracks = [];
-    for (const album of albumsData) {
-      const tracks = await lastfm.getAlbumTracks(artistId, album.id);
+    for (const item of mbData) {
+      const { album, tracks } = item;
       
       // Descargar portada de álbum de forma local
       const localAlbumCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
-      if (localAlbumCover) {
-        album.cover_image = localAlbumCover;
-      }
-
-      // Asignar calificación de MusicBrainz
-      const cleanedTitle = cleanName(album.title);
-      album.user_rating = ratingsMap[cleanedTitle] || 0;
+      album.cover_image = localAlbumCover || null;
 
       albumsWithTracks.push({ album, tracks });
-      // Espera de 300ms entre álbumes
-      await lastfm.sleep(300);
     }
 
     // 4. Inserción transaccional en SQLite
@@ -167,59 +148,33 @@ router.post('/:id/sync-albums', async (req, res) => {
   }
 
   try {
-    // 2. Obtener álbumes nuevos de Last.fm
-    const albumsData = await lastfm.getArtistAlbums(artistId);
+    // 2. Obtener álbumes nuevos y canciones desde MusicBrainz
+    const mbData = await musicbrainz.getArtistAlbumsAndTracks(artist.name);
 
-    // 3. Obtener calificaciones por lote de MusicBrainz
-    const ratingsMap = await lastfm.getMusicBrainzRatings(artist.name);
-
-    // Función auxiliar para normalizar nombres
-    const cleanName = (str) => {
-      if (!str) return '';
-      return str.toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    };
-
-    // 4. Obtener canciones de cada álbum (secuencialmente con delay)
+    // 3. Procesar álbumes
     const albumsWithTracks = [];
-    for (const album of albumsData) {
+    for (const item of mbData) {
+      const { album, tracks } = item;
+
       // Verificar si ya existe en la DB
       const existingAlbum = db.prepare('SELECT id, cover_image, release_year, user_rating FROM albums WHERE id = ?').get(album.id);
 
-      let localAlbumCover = album.cover_image;
-      const cleanedTitle = cleanName(album.title);
-      const mbRating = ratingsMap[cleanedTitle] || 0;
-
       if (!existingAlbum) {
-        // Si no existe, descargar portada y obtener canciones
-        const savedCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
-        if (savedCover) {
-          localAlbumCover = savedCover;
-        }
+        // Si no existe, descargar portada
+        const localAlbumCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
+        album.cover_image = localAlbumCover || null;
+        album.isNew = true;
 
-        const tracks = await lastfm.getAlbumTracks(artistId, album.id);
-
-        albumsWithTracks.push({
-          album: {
-            ...album,
-            cover_image: localAlbumCover,
-            user_rating: mbRating,
-            isNew: true
-          },
-          tracks
-        });
+        albumsWithTracks.push({ album, tracks });
       } else {
-        // Si ya existe, podemos opcionalmente actualizar metadatos faltantes (ej: año, portada o calificación si no tiene)
+        // Si ya existe, actualizar metadatos vacíos o sin calificar
         let updatedCover = existingAlbum.cover_image;
         if (!existingAlbum.cover_image && album.cover_image) {
           const savedCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
           if (savedCover) updatedCover = savedCover;
         }
 
-        // Si el rating actual local es 0 y MusicBrainz tiene uno mayor, lo actualizamos.
-        const finalRating = (existingAlbum.user_rating === 0 || existingAlbum.user_rating === null) && mbRating > 0 ? mbRating : existingAlbum.user_rating;
+        const finalRating = (existingAlbum.user_rating === 0 || existingAlbum.user_rating === null) && album.user_rating > 0 ? album.user_rating : existingAlbum.user_rating;
 
         albumsWithTracks.push({
           album: {
@@ -232,8 +187,6 @@ router.post('/:id/sync-albums', async (req, res) => {
           tracks: null // No modificamos tracks si ya existe
         });
       }
-
-      await lastfm.sleep(300);
     }
 
     // 5. Inserción transaccional
@@ -385,33 +338,19 @@ router.post('/batch-add', async (req, res) => {
     const localArtistImages = await imageDownloader.saveArtistGallery(artistData.images, artistId);
     artistData.localImages = localArtistImages;
 
-    // Descargar álbumes
-    const albumsData = await lastfm.getArtistAlbums(artistId);
-    const ratingsMap = await lastfm.getMusicBrainzRatings(artistData.name);
+    // Descargar álbumes y canciones desde MusicBrainz
+    const mbData = await musicbrainz.getArtistAlbumsAndTracks(artistData.name);
 
-    const cleanName = (str) => {
-      if (!str) return '';
-      return str.toLowerCase()
-        .replace(/[^\w\s]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-    };
-
-    // Obtener canciones de cada álbum secuencialmente
+    // Descargar portadas y estructurar datos
     const albumsWithTracks = [];
-    for (const album of albumsData) {
-      const tracks = await lastfm.getAlbumTracks(artistId, album.id);
+    for (const item of mbData) {
+      const { album, tracks } = item;
       
+      // Descargar portada de álbum de forma local
       const localAlbumCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
-      if (localAlbumCover) {
-        album.cover_image = localAlbumCover;
-      }
-
-      const cleanedTitle = cleanName(album.title);
-      album.user_rating = ratingsMap[cleanedTitle] || 0;
+      album.cover_image = localAlbumCover || null;
 
       albumsWithTracks.push({ album, tracks });
-      await lastfm.sleep(300);
     }
 
     // Guardar en SQLite transaccionalmente
