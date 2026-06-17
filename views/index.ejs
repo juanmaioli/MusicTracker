@@ -5,8 +5,19 @@
 <div class="row">
   <div class="col-12">
     <div class="glass-card p-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="h4 fw-bold m-0"><i class="bi bi-music-note-list text-danger me-2"></i>Tus Artistas</h2>
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h2 class="h4 fw-bold m-0 d-flex align-items-center gap-2">
+          <i class="bi bi-music-note-list text-danger"></i>
+          <span>Tus Artistas</span>
+        </h2>
+        <% if (artists.length > 0) { %>
+          <div class="position-relative" style="max-width: 300px; width: 100%;">
+            <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-secondary">
+              <i class="bi bi-funnel"></i>
+            </span>
+            <input type="text" id="filterInput" class="form-control form-control-sm rounded-pill bg-dark bg-opacity-50 text-white border-secondary border-opacity-25 ps-5" placeholder="Filtrar artistas..." autocomplete="off">
+          </div>
+        <% } %>
       </div>
 
       <% if (artists.length === 0) { %>
@@ -112,6 +123,57 @@
   .artist-grid-item:hover .artist-name-text {
     color: var(--brand-color);
   }
+  #filterInput:focus {
+    border-color: var(--brand-color) !important;
+    box-shadow: 0 0 0 0.25rem rgba(229, 9, 20, 0.25) !important;
+    background-color: rgba(0, 0, 0, 0.7) !important;
+  }
 </style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const filterInput = document.getElementById('filterInput');
+    const artistItems = document.querySelectorAll('.artist-grid-item');
+    
+    // Crear el mensaje de "no hay resultados"
+    const noResultsMsg = document.createElement('div');
+    noResultsMsg.id = 'noResultsMsg';
+    noResultsMsg.className = 'text-center py-5 d-none';
+    noResultsMsg.innerHTML = `
+      <i class="bi bi-search fs-2 text-muted mb-2 d-block"></i>
+      <p class="text-secondary m-0">No se encontraron artistas que coincidan con la búsqueda.</p>
+    `;
+    
+    const grid = document.querySelector('.artist-grid');
+    if (grid) {
+      grid.parentNode.appendChild(noResultsMsg);
+    }
+
+    if (filterInput) {
+      filterInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        let visibleCount = 0;
+
+        artistItems.forEach(item => {
+          const name = item.querySelector('.artist-name-text').textContent.toLowerCase();
+          if (name.includes(query)) {
+            item.classList.remove('d-none');
+            visibleCount++;
+          } else {
+            item.classList.add('d-none');
+          }
+        });
+
+        if (visibleCount === 0) {
+          if (grid) grid.classList.add('d-none');
+          noResultsMsg.classList.remove('d-none');
+        } else {
+          if (grid) grid.classList.remove('d-none');
+          noResultsMsg.classList.add('d-none');
+        }
+      });
+    }
+  });
+</script>
 
 <%- include('partials/footer') %>

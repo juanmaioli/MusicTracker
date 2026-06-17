@@ -111,7 +111,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.12.1 (Actual)
+### v1.13.0 (Actual)
+*   **🔍 Filtro de Artistas en Inicio:** Se implementó una barra de búsqueda en la cabecera del Dashboard principal para filtrar artistas en tiempo real sin recargar la página. Incluye un mensaje de advertencia visual interactivo si no hay coincidencias.
+
+### v1.12.1
 *   **🎨 Rediseño e Integración de Metadatos:** Se reubicó la caja de datos adicionales del artista justo debajo de los géneros y antes de la biografía, removiendo el encabezado "Ficha Técnica". La información ahora se integra en un bloque estético con fondo translúcido (`bg-dark bg-opacity-25`).
 
 ### v1.12.0
