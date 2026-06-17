@@ -105,8 +105,11 @@ async function saveArtistGallery(urls, artistSlug) {
   const localPaths = [];
   const safeSlug = artistSlug.replace(/[^a-zA-Z0-9-_]/g, '_');
 
-  for (let idx = 0; idx < urls.length; idx++) {
-    const url = urls[idx];
+  // Limitar a máximo 40 imágenes para la galería (41 fotos en total por artista)
+  const limitedUrls = urls.slice(0, 40);
+
+  for (let idx = 0; idx < limitedUrls.length; idx++) {
+    const url = limitedUrls[idx];
     let cleanUrl = url.split('?')[0];
     let ext = path.extname(cleanUrl) || '.jpg';
     if (!['.jpg', '.jpeg', '.png', '.webp', '.gif'].includes(ext.toLowerCase())) {

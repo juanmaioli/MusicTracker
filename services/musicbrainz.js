@@ -72,9 +72,6 @@ async function getArtistAlbumsAndTracks(artistName) {
     const filteredGroups = releaseGroups
       .filter(rg => {
         if (rg['primary-type'] !== 'Album') return false;
-
-        // Excluir álbumes sin calificación
-        if (!rg.rating || rg.rating.value === null || rg.rating.value === undefined) return false;
         
         const secondary = rg['secondary-types'] || [];
         if (secondary.length === 0) return true; // Álbum de estudio convencional
@@ -131,19 +128,27 @@ async function getArtistAlbumsAndTracks(artistName) {
         console.error(`Error descargando tracks del álbum ${rg.title}:`, trackError.message);
       }
 
-      // La URL de portada de Cover Art Archive basada en el release-group id
-      coverImage = `https://coverartarchive.org/release-group/${rg.id}/front`;
+      // Evaluar la regla de importación con excepción para álbumes sin calificar pero con más de 7 temas
+      const hasRating = rg.rating && rg.rating.value !== null && rg.rating.value !== undefined;
+      const hasMoreThanSevenTracks = tracks.length > 7;
 
-      albumsWithTracks.push({
-        album: {
-          id: rg.id, // El MBID del release-group actúa como id de álbum
-          title: rg.title,
-          cover_image: coverImage,
-          release_year: releaseYear,
-          user_rating: (rg.rating && rg.rating.value !== null) ? rg.rating.value : 0
-        },
-        tracks
-      });
+      if (hasRating || hasMoreThanSevenTracks) {
+        // La URL de portada de Cover Art Archive basada en el release-group id
+        coverImage = `https://coverartarchive.org/release-group/${rg.id}/front`;
+
+        albumsWithTracks.push({
+          album: {
+            id: rg.id, // El MBID del release-group actúa como id de álbum
+            title: rg.title,
+            cover_image: coverImage,
+            release_year: releaseYear,
+            user_rating: hasRating ? rg.rating.value : 0
+          },
+          tracks
+        });
+      } else {
+        console.log(`MusicBrainz: Omitiendo álbum "${rg.title}" por no estar calificado y poseer solo ${tracks.length} temas (7 o menos).`);
+      }
     }
 
     return albumsWithTracks;

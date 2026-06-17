@@ -34,7 +34,9 @@ function convertToOriginalImage(url) {
 // Helper para normalizar y codificar slugs de URL para Last.fm (resuelve problemas de comillas simples u otros caracteres decodificados por Express)
 function getSafeSlug(slug) {
   if (!slug) return '';
-  return encodeURIComponent(decodeURIComponent(slug))
+  // Restaurar el marcador _SLASH_ a %2F antes de buscar en Last.fm
+  const normalizedSlug = slug.replace(/_SLASH_/g, '%2F');
+  return encodeURIComponent(decodeURIComponent(normalizedSlug))
     .replace(/%2B/g, '+')
     .replace(/%20/g, '+')
     .replace(/'/g, '%27')
@@ -54,7 +56,11 @@ async function searchArtists(query) {
       if (i >= 10) return; // Retornar máximo 10
       const name = $(el).find('.artist-result-heading a').text().trim();
       const href = $(el).find('.artist-result-heading a').attr('href');
-      const slug = href ? href.split('/es/music/')[1] : null;
+      let slug = href ? href.split('/es/music/')[1] : null;
+      if (slug) {
+        // Sanitizar barra diagonal para evitar conflictos de ruteo en las URLs de Express
+        slug = slug.replace(/\//g, '_SLASH_').replace(/%2F/g, '_SLASH_');
+      }
       let image = $(el).find('.artist-result-image img').attr('src');
       
       // Convertir imagen al formato original sin recortar
@@ -185,7 +191,7 @@ async function getArtistDetail(artistSlug) {
 
     return {
       id: artistSlug,
-      name: decodeURIComponent(artistSlug).replace(/\+/g, ' '),
+      name: decodeURIComponent(artistSlug).replace(/\+/g, ' ').replace(/_SLASH_/g, '/'),
       image: imageUrl,
       images: images,
       genres: genres.slice(0, 5),

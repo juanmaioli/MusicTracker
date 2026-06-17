@@ -41,6 +41,7 @@ router.get('/:id', (req, res) => {
 
 // Agregar artista completo de Last.fm a SQLite
 router.post('/add/:id', async (req, res) => {
+  req.setTimeout(180000); // 3 minutos para prevenir timeouts en descargas de galerías grandes
   const artistId = req.params.id; // El id es el slug de Last.fm
 
   // Verificar si ya existe
@@ -80,17 +81,17 @@ router.post('/add/:id', async (req, res) => {
 
     // 4. Inserción transaccional en SQLite
     const insertArtist = db.prepare(`
-      INSERT INTO artists (id, name, image, images, genres, notes, popularity)
+      INSERT OR IGNORE INTO artists (id, name, image, images, genres, notes, popularity)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertAlbum = db.prepare(`
-      INSERT INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
+      INSERT OR IGNORE INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     const insertTrack = db.prepare(`
-      INSERT INTO tracks (id, album_id, title, duration_ms, track_number)
+      INSERT OR IGNORE INTO tracks (id, album_id, title, duration_ms, track_number)
       VALUES (?, ?, ?, ?, ?)
     `);
 
@@ -139,6 +140,7 @@ router.post('/add/:id', async (req, res) => {
 
 // Sincronizar/Actualizar sólo los álbumes del artista desde Last.fm y MusicBrainz
 router.post('/:id/sync-albums', async (req, res) => {
+  req.setTimeout(180000); // 3 minutos para prevenir timeouts en descargas de galerías grandes
   const artistId = req.params.id;
 
   // 1. Verificar si el artista existe
@@ -191,7 +193,7 @@ router.post('/:id/sync-albums', async (req, res) => {
 
     // 5. Inserción transaccional
     const insertAlbum = db.prepare(`
-      INSERT INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
+      INSERT OR IGNORE INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
 
@@ -200,7 +202,7 @@ router.post('/:id/sync-albums', async (req, res) => {
     `);
 
     const insertTrack = db.prepare(`
-      INSERT INTO tracks (id, album_id, title, duration_ms, track_number)
+      INSERT OR IGNORE INTO tracks (id, album_id, title, duration_ms, track_number)
       VALUES (?, ?, ?, ?, ?)
     `);
 
@@ -245,6 +247,28 @@ router.post('/:id/sync-albums', async (req, res) => {
   } catch (error) {
     console.error('Error al sincronizar álbumes:', error);
     res.status(500).render('error', { message: 'Ocurrió un error al sincronizar la discografía del artista.', title: 'Error' });
+  }
+});
+
+// Eliminar un álbum individual sin calificación de un artista
+router.post('/:id/albums/:albumId/delete', (req, res) => {
+  const { id, albumId } = req.params;
+
+  try {
+    // 1. Obtener la portada del álbum para borrarla físicamente del disco
+    const album = db.prepare('SELECT cover_image FROM albums WHERE id = ? AND artist_id = ?').get(albumId, id);
+    
+    if (album && album.cover_image) {
+      imageDownloader.deleteImage(album.cover_image);
+    }
+
+    // 2. Eliminar el álbum en la DB (el borrado en cascada se encarga de las canciones)
+    db.prepare('DELETE FROM albums WHERE id = ? AND artist_id = ?').run(albumId, id);
+
+    res.redirect(`/artists/${id}`);
+  } catch (error) {
+    console.error('Error al borrar álbum individual:', error);
+    res.status(500).render('error', { message: 'Ocurrió un error al intentar borrar el álbum.', title: 'Error' });
   }
 });
 
@@ -304,6 +328,7 @@ router.post('/:id/delete', (req, res) => {
 
 // Importación batch asíncrona de un artista por nombre
 router.post('/batch-add', async (req, res) => {
+  req.setTimeout(180000); // 3 minutos para prevenir timeouts en descargas de galerías grandes
   const { name } = req.body;
   if (!name || name.trim() === '') {
     return res.status(400).json({ success: false, error: 'Nombre de artista vacío' });
@@ -355,17 +380,17 @@ router.post('/batch-add', async (req, res) => {
 
     // Guardar en SQLite transaccionalmente
     const insertArtist = db.prepare(`
-      INSERT INTO artists (id, name, image, images, genres, notes, popularity)
+      INSERT OR IGNORE INTO artists (id, name, image, images, genres, notes, popularity)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertAlbum = db.prepare(`
-      INSERT INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
+      INSERT OR IGNORE INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
       VALUES (?, ?, ?, ?, ?, ?)
     `);
 
     const insertTrack = db.prepare(`
-      INSERT INTO tracks (id, album_id, title, duration_ms, track_number)
+      INSERT OR IGNORE INTO tracks (id, album_id, title, duration_ms, track_number)
       VALUES (?, ?, ?, ?, ?)
     `);
 

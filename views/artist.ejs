@@ -137,11 +137,14 @@ function formatBiography(text) {
           <span>Albums</span>
           <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill fs-6 fw-normal"><%= albums.length %></span>
         </h2>
-        <form action="/artists/<%= artist.id %>/sync-albums" method="POST" id="syncAlbumsForm">
-          <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 d-flex align-items-center gap-1" id="syncAlbumsBtn">
-            <i class="bi bi-arrow-repeat"></i> Actualizar Álbumes
-          </button>
-        </form>
+        <div class="d-flex gap-2 flex-wrap">
+          <form action="/artists/<%= artist.id %>/sync-albums" method="POST" id="syncAlbumsForm">
+            <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 d-flex align-items-center gap-1" id="syncAlbumsBtn">
+              <i class="bi bi-arrow-repeat"></i> Actualizar Álbumes
+            </button>
+          </form>
+
+        </div>
       </div>
 
       <% if (albums.length === 0) { %>
@@ -193,7 +196,7 @@ function formatBiography(text) {
               </div>
 
               <!-- Calificación de Álbum Fija -->
-              <div class="ms-3 d-flex align-items-center gap-2">
+              <div class="ms-3 d-flex align-items-center gap-3">
                 <div class="d-flex align-items-center gap-1 fs-5" style="user-select: none;" title="Calificación: <%= album.user_rating %> de 5 estrellas">
                   <% for (let i = 1; i <= 5; i++) { %>
                     <span class="px-1" style="font-size: 1.25rem; color: <%= i <= album.user_rating ? '#ffc107' : '#6c757d' %>;">
@@ -201,6 +204,13 @@ function formatBiography(text) {
                     </span>
                   <% } %>
                 </div>
+                <% if (!album.user_rating || album.user_rating === 0) { %>
+                  <form action="/artists/<%= artist.id %>/albums/<%= album.id %>/delete" method="POST" onsubmit="return confirm('¿Estás seguro de que querés borrar el álbum «<%= album.title %>»? Esta acción no se puede deshacer.');" class="m-0">
+                    <button type="submit" class="btn btn-link link-secondary p-0 hover-text-danger-link" title="Borrar álbum sin calificar" style="line-height: 1;">
+                      <i class="bi bi-trash3 fs-5"></i>
+                    </button>
+                  </form>
+                <% } %>
               </div>
             </div>
           <% }) %>
@@ -219,6 +229,14 @@ function formatBiography(text) {
   }
   .hover-danger-link:hover {
     color: var(--brand-color) !important;
+  }
+  .hover-text-danger-link {
+    color: #6c757d !important;
+    transition: color 0.15s ease-in-out, transform 0.15s ease-in-out;
+  }
+  .hover-text-danger-link:hover {
+    color: var(--brand-color) !important;
+    transform: scale(1.15);
   }
   .accordion-button::after {
     filter: invert(1);
