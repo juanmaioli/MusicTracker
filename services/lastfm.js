@@ -116,9 +116,14 @@ async function getArtistDetail(artistSlug) {
       const { data: mainHtml } = await http.get(artistUrl);
       const $main = cheerio.load(mainHtml);
       
-      $main('.tags .tag a').each((_, el) => {
+      // Buscar todos los enlaces que apunten a tags en la página principal
+      $main('a[href*="/tag/"]').each((_, el) => {
         const tag = $main(el).text().trim();
-        if (tag && !genres.includes(tag)) {
+        const artistName = decodeURIComponent(artistSlug).replace(/\+/g, ' ').replace(/_SLASH_/g, '/');
+        // Evitar incluir el nombre del propio artista como género
+        const isArtistName = tag.toLowerCase() === artistName.toLowerCase() || 
+                             tag.toLowerCase() === safeSlug.toLowerCase().replace(/_/g, ' ');
+        if (tag && !isArtistName && !genres.includes(tag)) {
           genres.push(tag);
         }
       });

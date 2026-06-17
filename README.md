@@ -114,7 +114,11 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.16.0 (Actual)
+### v1.16.1 (Actual)
+*   **🐛 Corrección en parsing de géneros (Last.fm):** Se corrigió el selector del extractor de tags/géneros en Last.fm para apuntar a `a[href*="/tag/"]`, solucionando el problema donde los géneros aparecían vacíos en la base de datos y la sección de estadísticas.
+*   **🎨 Diseño de insignias en rojo:** Se rediseñaron los badges de géneros musicales en la ficha de detalles del artista a un tono de acento rojo de alto contraste para mejorar la lectura y coherencia visual.
+
+### v1.16.0
 *   **🖼️ Galería Masonry estilo Pinterest:** Rediseño completo de la galería de fotos a un esquema Pinterest con la librería `masonry-layout` y `imagesloaded` que soporta 5 columnas fluidas.
 *   **👁️ Visor Lightbox Mejorado:** Se integró un modal Lightbox de alto contraste con atenuación de fondo y desenfoque (Blur), soporte para navegación por teclado, cierre inteligente al hacer clic en zonas vacías externas y botón directo de apertura externa en pestaña nueva.
 

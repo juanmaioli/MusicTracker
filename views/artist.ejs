@@ -55,9 +55,9 @@ function formatBiography(text) {
         </a>
       </h1>
       
-      <div class="mb-3 d-flex flex-wrap justify-content-center gap-1">
+      <div class="mb-3 d-flex flex-wrap justify-content-center gap-2">
         <% artist.genresList.forEach(genre => { %>
-          <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill text-capitalize"><%= genre %></span>
+          <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-10 rounded-pill text-capitalize px-3 py-1.5" style="font-size: 0.8rem; font-weight: 600;"><%= genre %></span>
         <% }) %>
       </div>
 
