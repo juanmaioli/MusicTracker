@@ -156,19 +156,146 @@ router.post('/add/:id', async (req, res) => {
   }
 });
 
-// Actualizar estado de seguimiento
-router.post('/:id/status', (req, res) => {
+// Sincronizar/Actualizar sólo los álbumes del artista desde Last.fm y MusicBrainz
+router.post('/:id/sync-albums', async (req, res) => {
   const artistId = req.params.id;
-  const { status } = req.body;
 
-  const validStatuses = ['Siguiendo', 'En pausa', 'Interés'];
-  if (!validStatuses.includes(status)) {
-    return res.status(400).send('Estado no válido');
+  // 1. Verificar si el artista existe
+  const artist = db.prepare('SELECT name FROM artists WHERE id = ?').get(artistId);
+  if (!artist) {
+    return res.status(404).render('error', { message: 'Artista no encontrado en la base de datos local.', title: 'Error' });
   }
 
-  db.prepare('UPDATE artists SET status = ? WHERE id = ?').run(status, artistId);
-  res.redirect(`/artists/${artistId}`);
+  try {
+    // 2. Obtener álbumes nuevos de Last.fm
+    const albumsData = await lastfm.getArtistAlbums(artistId);
+
+    // 3. Obtener calificaciones por lote de MusicBrainz
+    const ratingsMap = await lastfm.getMusicBrainzRatings(artist.name);
+
+    // Función auxiliar para normalizar nombres
+    const cleanName = (str) => {
+      if (!str) return '';
+      return str.toLowerCase()
+        .replace(/[^\w\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    };
+
+    // 4. Obtener canciones de cada álbum (secuencialmente con delay)
+    const albumsWithTracks = [];
+    for (const album of albumsData) {
+      // Verificar si ya existe en la DB
+      const existingAlbum = db.prepare('SELECT id, cover_image, release_year, user_rating FROM albums WHERE id = ?').get(album.id);
+
+      let localAlbumCover = album.cover_image;
+      const cleanedTitle = cleanName(album.title);
+      const mbRating = ratingsMap[cleanedTitle] || 0;
+
+      if (!existingAlbum) {
+        // Si no existe, descargar portada y obtener canciones
+        const savedCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
+        if (savedCover) {
+          localAlbumCover = savedCover;
+        }
+
+        const tracks = await lastfm.getAlbumTracks(artistId, album.id);
+
+        albumsWithTracks.push({
+          album: {
+            ...album,
+            cover_image: localAlbumCover,
+            user_rating: mbRating,
+            isNew: true
+          },
+          tracks
+        });
+      } else {
+        // Si ya existe, podemos opcionalmente actualizar metadatos faltantes (ej: año, portada o calificación si no tiene)
+        let updatedCover = existingAlbum.cover_image;
+        if (!existingAlbum.cover_image && album.cover_image) {
+          const savedCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
+          if (savedCover) updatedCover = savedCover;
+        }
+
+        // Si el rating actual local es 0 y MusicBrainz tiene uno mayor, lo actualizamos.
+        const finalRating = (existingAlbum.user_rating === 0 || existingAlbum.user_rating === null) && mbRating > 0 ? mbRating : existingAlbum.user_rating;
+
+        albumsWithTracks.push({
+          album: {
+            ...album,
+            cover_image: updatedCover,
+            release_year: existingAlbum.release_year || album.release_year,
+            user_rating: finalRating,
+            isNew: false
+          },
+          tracks: null // No modificamos tracks si ya existe
+        });
+      }
+
+      await lastfm.sleep(300);
+    }
+
+    // 5. Inserción transaccional
+    const insertAlbum = db.prepare(`
+      INSERT INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+
+    const updateAlbum = db.prepare(`
+      UPDATE albums SET release_year = ?, cover_image = ?, user_rating = ? WHERE id = ?
+    `);
+
+    const insertTrack = db.prepare(`
+      INSERT INTO tracks (id, album_id, title, duration_ms, track_number)
+      VALUES (?, ?, ?, ?, ?)
+    `);
+
+    const syncAlbumsTransaction = db.transaction((data) => {
+      for (const item of data) {
+        const { album, tracks } = item;
+        if (album.isNew) {
+          insertAlbum.run(
+            album.id,
+            artistId,
+            album.title,
+            album.cover_image,
+            album.release_year,
+            album.user_rating
+          );
+
+          if (tracks) {
+            for (const track of tracks) {
+              insertTrack.run(
+                track.id,
+                album.id,
+                track.title,
+                track.duration_ms,
+                track.track_number
+              );
+            }
+          }
+        } else {
+          updateAlbum.run(
+            album.release_year,
+            album.cover_image,
+            album.user_rating,
+            album.id
+          );
+        }
+      }
+    });
+
+    syncAlbumsTransaction(albumsWithTracks);
+
+    res.redirect(`/artists/${artistId}`);
+  } catch (error) {
+    console.error('Error al sincronizar álbumes:', error);
+    res.status(500).render('error', { message: 'Ocurrió un error al sincronizar la discografía del artista.', title: 'Error' });
+  }
 });
+
+
 
 // Actualizar notas personales
 router.post('/:id/notes', (req, res) => {

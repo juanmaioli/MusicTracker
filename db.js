@@ -2,7 +2,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 
 const dbPath = path.join(__dirname, 'musictracker.db');
-const db = new Database(dbPath, { verbose: console.log });
+const db = new Database(dbPath);
 
 // Habilitar claves foráneas
 db.pragma('foreign_keys = ON');
@@ -16,7 +16,6 @@ db.exec(`
     images TEXT,
     genres TEXT,
     popularity INTEGER DEFAULT 100,
-    status TEXT DEFAULT 'Siguiendo',
     notes TEXT DEFAULT '',
     added_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );

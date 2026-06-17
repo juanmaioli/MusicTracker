@@ -31,6 +31,17 @@ function convertToOriginalImage(url) {
   return url.replace(/\/(avatar70s|avatar170s|174s|300x300|500x500|64s|64)\//i, '/ar0/');
 }
 
+// Helper para normalizar y codificar slugs de URL para Last.fm (resuelve problemas de comillas simples u otros caracteres decodificados por Express)
+function getSafeSlug(slug) {
+  if (!slug) return '';
+  return encodeURIComponent(decodeURIComponent(slug))
+    .replace(/%2B/g, '+')
+    .replace(/%20/g, '+')
+    .replace(/'/g, '%27')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29');
+}
+
 // 1. Buscar artistas en Last.fm
 async function searchArtists(query) {
   try {
@@ -69,9 +80,10 @@ async function searchArtists(query) {
 
 // 2. Obtener detalles y biografía del artista
 async function getArtistDetail(artistSlug) {
+  const safeSlug = getSafeSlug(artistSlug);
   try {
     // Primero, la bio completa desde +wiki
-    const wikiUrl = `https://www.last.fm/es/music/${artistSlug}/+wiki`;
+    const wikiUrl = `https://www.last.fm/es/music/${safeSlug}/+wiki`;
     const { data: wikiHtml } = await http.get(wikiUrl);
     const $wiki = cheerio.load(wikiHtml);
 
@@ -79,7 +91,7 @@ async function getArtistDetail(artistSlug) {
     
     // Si no la encuentra, intentar con la biografía corta del perfil principal
     if (!fullBio) {
-      const artistUrl = `https://www.last.fm/es/music/${artistSlug}`;
+      const artistUrl = `https://www.last.fm/es/music/${safeSlug}`;
       const { data: mainHtml } = await http.get(artistUrl);
       const $main = cheerio.load(mainHtml);
       fullBio = $main('.wiki-block-inner').text().trim() || 'Sin biografía disponible.';
@@ -94,7 +106,7 @@ async function getArtistDetail(artistSlug) {
     const genres = [];
     const images = [];
     try {
-      const artistUrl = `https://www.last.fm/es/music/${artistSlug}`;
+      const artistUrl = `https://www.last.fm/es/music/${safeSlug}`;
       const { data: mainHtml } = await http.get(artistUrl);
       const $main = cheerio.load(mainHtml);
       
@@ -107,7 +119,7 @@ async function getArtistDetail(artistSlug) {
 
       // Intentar obtener todas las imágenes desde la sección de galería /+images
       try {
-        const imagesUrl = `https://www.last.fm/es/music/${artistSlug}/+images`;
+        const imagesUrl = `https://www.last.fm/es/music/${safeSlug}/+images`;
         const { data: imagesHtml } = await http.get(imagesUrl);
         const $images = cheerio.load(imagesHtml);
         
@@ -157,7 +169,7 @@ async function getArtistDetail(artistSlug) {
     // (Buscamos la imagen del artista en la búsqueda si no viene en el wiki)
     let imageUrl = null;
     try {
-      const searchUrl = `https://www.last.fm/es/search/artists?q=${artistSlug}`;
+      const searchUrl = `https://www.last.fm/es/search/artists?q=${safeSlug}`;
       const { data: searchHtml } = await http.get(searchUrl);
       const $search = cheerio.load(searchHtml);
       const rawImg = $search('.artist-results .artist-result-image img').first().attr('src');
@@ -188,8 +200,10 @@ async function getArtistDetail(artistSlug) {
 
 // 3. Obtener álbumes de un artista
 async function getArtistAlbums(artistSlug) {
+  const safeSlug = getSafeSlug(artistSlug);
+  const decodedArtistSlug = decodeURIComponent(artistSlug);
   try {
-    const url = `https://www.last.fm/es/music/${artistSlug}/+albums`;
+    const url = `https://www.last.fm/es/music/${safeSlug}/+albums`;
     const { data: html } = await http.get(url);
     const $ = cheerio.load(html);
     const albums = [];
@@ -202,13 +216,17 @@ async function getArtistAlbums(artistSlug) {
       let href = null;
       $(el).find('a').each((_, aEl) => {
         const h = $(aEl).attr('href');
-        if (h && h.includes(`/es/music/${artistSlug}/`) && !h.includes('/+')) {
-          href = h;
+        if (h) {
+          const decodedHref = decodeURIComponent(h);
+          if (decodedHref.includes(`/es/music/${decodedArtistSlug}/`) && !decodedHref.includes('/+')) {
+            href = h;
+          }
         }
       });
 
       if (href) {
-        const albumSlug = decodeURIComponent(href.split(`/es/music/${artistSlug}/`)[1] || href.split('/').pop());
+        const decodedHref = decodeURIComponent(href);
+        const albumSlug = decodedHref.split(`/es/music/${decodedArtistSlug}/`)[1] || decodedHref.split('/').pop();
         const title = $(el).find('.link-block-target').text().trim() || albumSlug.replace(/\+/g, ' ');
         let cover = $(el).find('.cover-art img').attr('src') || $(el).find('img').attr('src');
 
@@ -241,8 +259,10 @@ async function getArtistAlbums(artistSlug) {
 
 // 4. Obtener canciones de un álbum
 async function getAlbumTracks(artistSlug, albumSlug) {
+  const safeArtistSlug = getSafeSlug(artistSlug);
+  const safeAlbumSlug = getSafeSlug(albumSlug);
   try {
-    const url = `https://www.last.fm/es/music/${artistSlug}/${albumSlug}`;
+    const url = `https://www.last.fm/es/music/${safeArtistSlug}/${safeAlbumSlug}`;
     const { data: html } = await http.get(url);
     const $ = cheerio.load(html);
     const tracks = [];
