@@ -8,7 +8,7 @@
 
 *   **🕵️ Scraping de Last.fm:** Obtiene biografías completas en español, discografías y listados de tracks sin necesidad de usar APIs de terceros ni tokens.
 *   **💾 Almacenamiento Local de Imágenes:** Descarga automáticamente fotos de artistas y portadas de álbumes a máxima resolución (`ar0`) en la carpeta pública local, evitando enlaces rotos externos.
-*   **🖼️ Galería Interactiva:** En la sección de detalles de cada artista se visualizan hasta 40 fotos en una galería interactiva con tira de miniaturas, visor principal de alta resolución y navegación por teclado (flechas `←` y `→`).
+*   **🖼️ Galería Masonry estilo Pinterest:** En el perfil del artista se despliega una grilla dinámica responsiva de 5 columnas basada en la librería Masonry. Incluye efectos hover premium y un visor modal (Lightbox) interactivo con cierre al hacer clic fuera, navegación por teclado (`←` y `→`) y botón para abrir fotos en una pestaña nueva.
 *   **🔍 Búsqueda Dinámica con Skeleton Loaders:** Interfaz de búsqueda interactiva basada en AJAX que renderiza placeholders de carga animados (Skeleton Loaders) sin recargas completas de página.
 *   **⚡ Cacheo de Portadas Fallidas (Cover Art Archive):** Marcado automático de imágenes inexistentes con el valor centinela `'NO_COVER'` para evitar peticiones HTTP 404 redundantes y acelerar las sincronizaciones de álbumes consecutivas.
 *   **📊 Sistema de Logs Persistentes:** Registros secuenciales explícitos impresos en consola y guardados localmente en [logs/importaciones.log](file:///home/juan/Documentos/Dev/Apps/MusicTracker/logs/importaciones.log) con formato de hora regional (es_AR) para auditar importaciones de artistas y álbumes.
@@ -114,7 +114,11 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.15.0 (Actual)
+### v1.16.0 (Actual)
+*   **🖼️ Galería Masonry estilo Pinterest:** Rediseño completo de la galería de fotos a un esquema Pinterest con la librería `masonry-layout` y `imagesloaded` que soporta 5 columnas fluidas.
+*   **👁️ Visor Lightbox Mejorado:** Se integró un modal Lightbox de alto contraste con atenuación de fondo y desenfoque (Blur), soporte para navegación por teclado, cierre inteligente al hacer clic en zonas vacías externas y botón directo de apertura externa en pestaña nueva.
+
+### v1.15.0
 *   **📂 Logs Persistentes en Archivo:** Implementación de un servicio de logging personalizado (`services/logger.js`) que escribe todos los eventos de importación y sincronización en un archivo local (`logs/importaciones.log`) con fecha/hora local de Argentina, además de imprimirlos en la consola del servidor. Se añadió la exclusión de esta carpeta en `.gitignore`.
 
 ### v1.14.0

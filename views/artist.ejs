@@ -156,10 +156,8 @@ function formatBiography(text) {
   <!-- Discografía, Canciones y Galería -->
   <div class="col-lg-8">
 
-    <% if (artist.imagesList && artist.imagesList.length > 0) { 
-      const startIndex = artist.imagesList.length > 1 ? 1 : 0;
-    %>
-      <!-- Galería de Fotos Interactiva al estilo ShowTracker -->
+    <% if (artist.imagesList && artist.imagesList.length > 0) { %>
+      <!-- Galería Masonry estilo Pinterest -->
       <div class="glass-card p-4 mb-4">
         <h2 class="h4 fw-bold mb-4 d-flex align-items-center gap-2">
           <i class="bi bi-images text-danger"></i>
@@ -167,27 +165,27 @@ function formatBiography(text) {
           <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill fs-6 fw-normal"><%= artist.imagesList.length %></span>
         </h2>
         
-        <div class="d-flex flex-column align-items-center">
-          <!-- Visor Principal -->
-          <div class="main-gallery-viewer rounded-4 overflow-hidden shadow mb-4 bg-black bg-opacity-25 border border-secondary border-opacity-10 position-relative w-100" style="max-width: 800px; aspect-ratio: 16/9;">
-            <a href="<%= artist.imagesList[startIndex] %>" id="main-gallery-link" target="_blank" title="Abrir imagen en tamaño completo en pestaña nueva" class="d-block w-100 h-100 cursor-zoom">
-              <img id="main-gallery-img" src="<%= artist.imagesList[startIndex] %>" class="w-100 h-100 object-fit-contain" alt="Foto de <%= artist.name %>" style="transition: opacity 0.2s ease;">
-            </a>
-          </div>
-          
-          <% if (artist.imagesList.length > 1) { %>
-            <!-- Tira de Miniaturas -->
-            <div class="d-flex gap-2 overflow-x-auto w-100 pb-2 px-1 justify-content-start" id="galleryThumbnails" style="max-width: 800px; scrollbar-width: thin; -webkit-overflow-scrolling: touch;">
-              <% artist.imagesList.forEach((img, idx) => { %>
-                <div class="gallery-thumbnail-wrapper rounded-3 overflow-hidden border cursor-pointer bg-dark transition-all <%= idx === startIndex ? 'border-danger border-2 shadow' : 'border-secondary border-opacity-25' %>" 
-                     style="width: 120px; aspect-ratio: 16/9; flex-shrink: 0; transition: all 0.2s ease;"
-                     onclick="selectGalleryImage('<%= img %>', this)"
-                     title="Ver foto <%= idx + 1 %>">
-                  <img src="<%= img %>" class="w-100 h-100 object-fit-cover <%= idx === startIndex ? 'opacity-100' : 'opacity-70' %>" alt="Miniatura <%= idx + 1 %>">
+        <div class="masonry-grid" id="masonryGrid">
+          <div class="masonry-grid-sizer"></div>
+          <% artist.imagesList.forEach((img, idx) => { %>
+            <div class="masonry-grid-item" onclick="openPhotoLightbox(<%= idx %>)">
+              <div class="masonry-card rounded-3 overflow-hidden position-relative shadow-sm">
+                <img src="<%= img %>" alt="Foto <%= idx + 1 %> de <%= artist.name %>" class="w-100 h-auto d-block">
+                <div class="masonry-overlay d-flex flex-column justify-content-between p-3 position-absolute top-0 start-0 w-100 h-100">
+                  <div class="text-end">
+                    <a href="<%= img %>" target="_blank" onclick="event.stopPropagation();" class="btn btn-sm btn-dark bg-opacity-75 border-0 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px;" title="Abrir en pestaña nueva">
+                      <i class="bi bi-box-arrow-up-right fs-6 text-white"></i>
+                    </a>
+                  </div>
+                  <div class="text-start">
+                    <span class="badge bg-dark bg-opacity-75 border border-secondary border-opacity-25 py-1 px-2" style="font-size: 0.75rem;">
+                      Foto <%= idx + 1 %>
+                    </span>
+                  </div>
                 </div>
-              <% }) %>
+              </div>
             </div>
-          <% } %>
+          <% }) %>
         </div>
       </div>
     <% } %>
@@ -343,30 +341,64 @@ function formatBiography(text) {
     background: var(--brand-color);
   }
 
-  /* Galería de fotos interactiva */
+  /* Pinterest Masonry Layout */
+  .masonry-grid {
+    width: 100%;
+    margin: 0 auto;
+  }
+  
+  /* Por defecto en móviles: 2 columnas */
+  .masonry-grid-sizer,
+  .masonry-grid-item {
+    width: calc((100% - 15px) / 2);
+  }
+  
+  @media (min-width: 768px) {
+    .masonry-grid-sizer,
+    .masonry-grid-item {
+      width: calc((100% - 30px) / 3); /* 3 columnas */
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    .masonry-grid-sizer,
+    .masonry-grid-item {
+      width: calc((100% - 60px) / 5); /* 5 columnas */
+    }
+  }
+  
+  .masonry-grid-item {
+    float: left;
+    margin-bottom: 15px;
+  }
+  
+  .masonry-card {
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: transform 0.25s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
+  }
+  .masonry-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+    border-color: rgba(229, 9, 20, 0.3);
+  }
+  .masonry-card img {
+    transition: filter 0.25s ease;
+  }
+  .masonry-card:hover img {
+    filter: brightness(0.85);
+  }
+  .masonry-overlay {
+    opacity: 0;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.6) 100%);
+    transition: opacity 0.25s ease;
+  }
+  .masonry-card:hover .masonry-overlay {
+    opacity: 1;
+  }
   .cursor-zoom {
     cursor: zoom-in;
-  }
-  .gallery-thumbnail-wrapper img {
-    transition: opacity 0.2s ease;
-  }
-  .gallery-thumbnail-wrapper:hover img {
-    opacity: 1 !important;
-  }
-  /* Estilizar la tira de miniaturas */
-  #galleryThumbnails::-webkit-scrollbar {
-    height: 6px;
-  }
-  #galleryThumbnails::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 10px;
-  }
-  #galleryThumbnails::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 10px;
-  }
-  #galleryThumbnails::-webkit-scrollbar-thumb:hover {
-    background: var(--brand-color);
   }
 
   /* Estilos premium para biografías */
@@ -394,6 +426,23 @@ function formatBiography(text) {
   .hover-spotify-link:hover {
     color: #1ed760 !important;
     transform: scale(1.2) rotate(8deg);
+  }
+
+  /* Estilos de alto contraste para el enlace externo del Lightbox */
+  .lightbox-external-link {
+    color: rgba(255, 255, 255, 0.95) !important;
+    font-weight: 500;
+    transition: color 0.15s ease-in-out;
+  }
+  .lightbox-external-link:hover {
+    color: var(--brand-color) !important;
+    text-decoration: underline !important;
+  }
+
+  /* Desenfoque de fondo premium para el modal del Lightbox */
+  #photoLightboxModal {
+    backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.4);
   }
 </style>
 
@@ -431,62 +480,96 @@ function formatBiography(text) {
     document.addEventListener('visibilitychange', handleVisibility, { once: true });
   }
 
-  // Cambiar visor de imagen en la galería interactiva
-  function selectGalleryImage(imgUrl, thumbElement) {
-    const mainImg = document.getElementById('main-gallery-img');
-    const mainLink = document.getElementById('main-gallery-link');
-    if (!mainImg || !mainLink) return;
+  // Lógica del Lightbox de fotos Masonry
+  let currentPhotoIndex = 0;
+  let artistImages = [];
+  <% if (artist.imagesList) { %>
+    artistImages = <%- JSON.stringify(artist.imagesList) %>;
+  <% } %>
+  let photoLightboxModalInstance = null;
 
-    mainImg.style.opacity = '0';
-    setTimeout(() => {
-      mainImg.src = imgUrl;
-      mainLink.href = imgUrl;
-      mainImg.style.opacity = '1';
-    }, 150);
-
-    const wrappers = document.querySelectorAll('.gallery-thumbnail-wrapper');
-    wrappers.forEach(w => {
-      w.classList.remove('border-danger', 'border-2', 'shadow');
-      w.classList.add('border-secondary', 'border-opacity-25');
-      const img = w.querySelector('img');
-      if (img) img.classList.remove('opacity-100');
-      if (img) img.classList.add('opacity-70');
-    });
-
-    thumbElement.classList.add('border-danger', 'border-2', 'shadow');
-    thumbElement.classList.remove('border-secondary', 'border-opacity-25');
-    const activeImg = thumbElement.querySelector('img');
-    if (activeImg) {
-      activeImg.classList.add('opacity-100');
-      activeImg.classList.remove('opacity-70');
+  function openPhotoLightbox(index) {
+    currentPhotoIndex = index;
+    const imgUrl = artistImages[currentPhotoIndex];
+    
+    const lightboxImg = document.getElementById('lightboxImg');
+    const indexLabel = document.getElementById('lightboxIndexLabel');
+    const externalLink = document.getElementById('lightboxExternalLink');
+    if (!lightboxImg || !indexLabel) return;
+    
+    lightboxImg.src = imgUrl;
+    indexLabel.textContent = `Foto ${currentPhotoIndex + 1} de ${artistImages.length}`;
+    if (externalLink) externalLink.href = imgUrl;
+    
+    if (!photoLightboxModalInstance) {
+      const modalEl = document.getElementById('photoLightboxModal');
+      photoLightboxModalInstance = new bootstrap.Modal(modalEl);
+      
+      // Cerrar modal al hacer clic en cualquier zona vacía (fuera de la imagen y de los botones)
+      modalEl.addEventListener('click', (e) => {
+        const isClickOnInteractive = e.target.closest('#lightboxImg') || 
+                                     e.target.closest('#lightboxPrevBtn') || 
+                                     e.target.closest('#lightboxNextBtn') ||
+                                     e.target.closest('#lightboxIndexLabel') ||
+                                     e.target.closest('#lightboxExternalLink') ||
+                                     e.target.closest('.rounded-pill');
+        if (!isClickOnInteractive) {
+          photoLightboxModalInstance.hide();
+        }
+      });
     }
+    
+    photoLightboxModalInstance.show();
   }
 
-  // Navegación por teclado (Flechas Izquierda / Derecha)
+  function navigateLightbox(direction) {
+    if (artistImages.length <= 1) return;
+    
+    const lightboxImg = document.getElementById('lightboxImg');
+    const indexLabel = document.getElementById('lightboxIndexLabel');
+    const externalLink = document.getElementById('lightboxExternalLink');
+    if (!lightboxImg || !indexLabel) return;
+    
+    currentPhotoIndex = (currentPhotoIndex + direction + artistImages.length) % artistImages.length;
+    const nextImgUrl = artistImages[currentPhotoIndex];
+    
+    lightboxImg.style.opacity = '0';
+    setTimeout(() => {
+      lightboxImg.src = nextImgUrl;
+      indexLabel.textContent = `Foto ${currentPhotoIndex + 1} de ${artistImages.length}`;
+      if (externalLink) externalLink.href = nextImgUrl;
+      lightboxImg.style.opacity = '1';
+    }, 150);
+  }
+
+  // Teclado para navegación de fotos y de grid anterior
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
-      const wrappers = Array.from(document.querySelectorAll('.gallery-thumbnail-wrapper'));
-      if (wrappers.length <= 1) return;
-
-      // Encontrar índice activo
-      const activeIdx = wrappers.findIndex(w => w.classList.contains('border-danger'));
-      if (activeIdx === -1) return;
-
-      // Prevenir scroll de página
-      e.preventDefault();
-
-      let nextIdx;
+    const photoModalEl = document.getElementById('photoLightboxModal');
+    const isPhotoModalOpen = photoModalEl && photoModalEl.classList.contains('show');
+    
+    if (isPhotoModalOpen) {
       if (e.key === 'ArrowRight') {
-        nextIdx = (activeIdx + 1) % wrappers.length;
-      } else {
-        nextIdx = (activeIdx - 1 + wrappers.length) % wrappers.length;
+        e.preventDefault();
+        navigateLightbox(1);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigateLightbox(-1);
       }
+    }
+  });
 
-      const nextThumb = wrappers[nextIdx];
-      if (nextThumb) {
-        nextThumb.click();
-        nextThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-      }
+  // Inicializar Masonry tras cargar las imágenes
+  document.addEventListener('DOMContentLoaded', () => {
+    const grid = document.querySelector('#masonryGrid');
+    if (grid) {
+      imagesLoaded(grid, () => {
+        const msnry = new Masonry(grid, {
+          itemSelector: '.masonry-grid-item',
+          columnWidth: '.masonry-grid-sizer',
+          percentPosition: true,
+          gutter: 15
+        });
+      });
     }
   });
 
@@ -739,5 +822,48 @@ function formatBiography(text) {
     </div>
   </div>
 </div>
+
+<!-- Modal Lightbox de Fotos de la Galería -->
+<div class="modal fade" id="photoLightboxModal" tabindex="-1" aria-labelledby="photoLightboxLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content bg-transparent border-0 shadow-none text-white">
+      <div class="modal-body p-0 position-relative text-center d-flex flex-column align-items-center justify-content-center">
+        <!-- Botón para cerrar -->
+        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Cerrar" style="z-index: 1050; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8));"></button>
+        
+        <!-- Contenedor de Imagen con transición -->
+        <div class="d-flex align-items-center justify-content-between w-100" style="max-height: 85vh;">
+          <!-- Flecha izquierda -->
+          <button class="btn btn-link text-white p-2 border-0" id="lightboxPrevBtn" onclick="navigateLightbox(-1)" style="font-size: 2.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 1040;">
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          
+          <div class="mx-auto overflow-hidden rounded-4 shadow-lg border border-secondary border-opacity-10 bg-black bg-opacity-75" style="max-width: 80%; max-height: 80vh;">
+            <img id="lightboxImg" src="" alt="Foto ampliada del artista" class="img-fluid object-fit-contain" style="max-height: 80vh; transition: opacity 0.2s ease;">
+          </div>
+          
+          <!-- Flecha derecha -->
+          <button class="btn btn-link text-white p-2 border-0" id="lightboxNextBtn" onclick="navigateLightbox(1)" style="font-size: 2.5rem; text-shadow: 0 2px 4px rgba(0,0,0,0.8); z-index: 1040;">
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+        
+        <!-- Info inferior -->
+        <div class="mt-3 bg-dark bg-opacity-75 py-2 px-4 rounded-pill border border-secondary border-opacity-25 d-flex align-items-center gap-3" style="backdrop-filter: blur(10px);">
+          <span id="lightboxIndexLabel" class="text-white fw-medium fs-6">Foto 1 de 10</span>
+          <span class="text-white-50">|</span>
+          <a href="" id="lightboxExternalLink" target="_blank" class="lightbox-external-link text-decoration-none d-inline-flex align-items-center gap-1 small" title="Abrir en pestaña nueva">
+            <i class="bi bi-box-arrow-up-right"></i>
+            <span>Abrir en pestaña nueva</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Librerías de Pinterest Masonry -->
+<script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
+<script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
 
 <%- include('partials/footer') %>
