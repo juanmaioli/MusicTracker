@@ -47,7 +47,7 @@ router.get('/', (req, res) => {
     FROM artists a
     LEFT JOIN albums al ON a.id = al.artist_id
     GROUP BY a.id
-    ORDER BY a.added_at DESC
+    ORDER BY a.name COLLATE NOCASE ASC
   `).all();
 
   artists.forEach(a => {

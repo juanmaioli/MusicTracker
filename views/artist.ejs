@@ -7,6 +7,33 @@ function formatDuration(ms) {
   const seconds = Math.floor((ms % 60000) / 1000);
   return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
 }
+
+function formatBiography(text) {
+  if (!text) return '<p class="text-secondary m-0">No hay biografía disponible.</p>';
+  
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+
+  const cleanText = escaped.trim();
+  const sentences = cleanText.split(/(?<=\.\s)(?=[A-ZÁÉÍÓÚÑ])/);
+  
+  if (sentences.length <= 1) {
+    return `<p class="bio-paragraph">${cleanText}</p>`;
+  }
+  
+  const paragraphs = [];
+  const groupSize = 3;
+  for (let i = 0; i < sentences.length; i += groupSize) {
+    const group = sentences.slice(i, i + groupSize).join(' ');
+    paragraphs.push(`<p class="bio-paragraph">${group}</p>`);
+  }
+  
+  return paragraphs.join('\n');
+}
 %>
 
 <div class="row g-4">
@@ -245,6 +272,23 @@ function formatDuration(ms) {
   }
   #galleryThumbnails::-webkit-scrollbar-thumb:hover {
     background: var(--brand-color);
+  }
+
+  /* Estilos premium para biografías */
+  .bio-paragraph {
+    margin-bottom: 1.25rem;
+    text-align: justify;
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .bio-paragraph:first-of-type::first-letter {
+    font-size: 3.2rem;
+    font-weight: 800;
+    float: left;
+    line-height: 1;
+    margin-right: 0.6rem;
+    margin-top: 0.15rem;
+    color: var(--brand-color);
+    text-shadow: 0 0 12px rgba(229, 9, 20, 0.35);
   }
 </style>
 
@@ -520,8 +564,8 @@ function formatDuration(ms) {
         <h5 class="modal-title fw-bold" id="bioModalLabel"><i class="bi bi-body-text text-danger me-2"></i>Biografía de <%= artist.name %></h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
       </div>
-      <div class="modal-body p-4" style="line-height: 1.7; font-size: 0.95rem; white-space: pre-line;">
-        <%= artist.notes %>
+      <div class="modal-body p-4 style-scrollbar" style="line-height: 1.7; font-size: 0.98rem; max-height: 70vh; overflow-y: auto;">
+        <%- formatBiography(artist.notes) %>
       </div>
     </div>
   </div>
