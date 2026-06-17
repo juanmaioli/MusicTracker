@@ -61,27 +61,6 @@ function formatBiography(text) {
         <% }) %>
       </div>
 
-      <hr class="border-secondary border-opacity-25 my-3">
-
-      <!-- Biografía Scrapeada completa de Last.fm -->
-      <div class="mb-4 text-start">
-        <h2 class="h6 fw-bold mb-2 d-flex align-items-center"><i class="bi bi-body-text text-danger me-2"></i>Biografía</h2>
-        <div class="text-secondary" style="font-size: 0.85rem; line-height: 1.5;">
-          <% 
-            const bioText = artist.notes || '';
-            const words = bioText.trim().split(/\s+/);
-            const isLong = words.length > 20;
-            const truncatedBio = isLong ? words.slice(0, 20).join(' ') + '...' : bioText;
-          %>
-          <p class="m-0" style="white-space: pre-line;"><%= truncatedBio %></p>
-          <% if (isLong) { %>
-            <a href="#" class="text-danger fw-semibold text-decoration-none d-inline-block mt-2 hover-underline" data-bs-toggle="modal" data-bs-target="#bioModal" style="font-size: 0.8rem;">
-              Leer más <i class="bi bi-plus-circle align-middle ms-1" style="font-size: 0.75rem;"></i>
-            </a>
-          <% } %>
-        </div>
-      </div>
-
       <% 
         let artistMetadata = {};
         if (artist.metadata) {
@@ -95,9 +74,7 @@ function formatBiography(text) {
       %>
 
       <% if (hasMetadata) { %>
-        <hr class="border-secondary border-opacity-25 my-3">
-        <div class="mb-4 text-start">
-          <h2 class="h6 fw-bold mb-3 d-flex align-items-center"><i class="bi bi-info-circle text-danger me-2"></i>Ficha Técnica</h2>
+        <div class="mb-3 mt-3 text-start bg-dark bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-10">
           <div class="d-flex flex-column gap-2" style="font-size: 0.85rem;">
             <% if (artistMetadata['Años de actividad']) { %>
               <div>
@@ -130,7 +107,7 @@ function formatBiography(text) {
               </div>
             <% } %>
             <% if (artistMetadata['Miembros'] && Array.isArray(artistMetadata['Miembros']) && artistMetadata['Miembros'].length > 0) { %>
-              <div class="mt-2">
+              <div class="mt-1">
                 <span class="text-secondary fw-semibold">Miembros:</span>
                 <ul class="list-unstyled text-white-50 ms-2 mt-1 mb-0 ps-2" style="font-size: 0.8rem; border-left: 2px solid rgba(229, 9, 20, 0.4);">
                   <% artistMetadata['Miembros'].forEach(member => { %>
@@ -144,6 +121,27 @@ function formatBiography(text) {
       <% } %>
 
       <hr class="border-secondary border-opacity-25 my-3">
+
+      <!-- Biografía Scrapeada completa de Last.fm -->
+      <div class="mb-4 text-start">
+        <h2 class="h6 fw-bold mb-2 d-flex align-items-center"><i class="bi bi-body-text text-danger me-2"></i>Biografía</h2>
+        <div class="text-secondary" style="font-size: 0.85rem; line-height: 1.5;">
+          <% 
+            const bioText = artist.notes || '';
+            const words = bioText.trim().split(/\s+/);
+            const isLong = words.length > 20;
+            const truncatedBio = isLong ? words.slice(0, 20).join(' ') + '...' : bioText;
+          %>
+          <p class="m-0" style="white-space: pre-line;"><%= truncatedBio %></p>
+          <% if (isLong) { %>
+            <a href="#" class="text-danger fw-semibold text-decoration-none d-inline-block mt-2 hover-underline" data-bs-toggle="modal" data-bs-target="#bioModal" style="font-size: 0.8rem;">
+              Leer más <i class="bi bi-plus-circle align-middle ms-1" style="font-size: 0.75rem;"></i>
+            </a>
+          <% } %>
+        </div>
+      </div>
+
+
 
 
       <!-- Eliminar Artista -->
