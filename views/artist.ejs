@@ -183,6 +183,13 @@ function formatBiography(text) {
                      title="Ver canciones y portada">
                   <h3 class="h6 fw-bold m-0 text-white hover-underline"><%= album.title %> <%= album.release_year ? `· ${album.release_year}` : '' %></h3>
                 </div>
+
+                <a href="https://open.spotify.com/search/<%= encodeURIComponent(artist.name + ' ' + album.title) %>" 
+                   target="_blank" 
+                   class="hover-spotify-link d-inline-flex align-items-center" 
+                   title="Escuchar <%= album.title %> en Spotify">
+                  <i class="bi bi-spotify fs-5"></i>
+                </a>
               </div>
 
               <!-- Calificación de Álbum Fija -->
@@ -295,6 +302,16 @@ function formatBiography(text) {
     margin-top: 0.15rem;
     color: var(--brand-color);
     text-shadow: 0 0 12px rgba(229, 9, 20, 0.35);
+  }
+
+  /* Efecto hover premium para el botón de Spotify */
+  .hover-spotify-link {
+    color: #1db954 !important;
+    transition: transform 0.2s ease, color 0.2s ease;
+  }
+  .hover-spotify-link:hover {
+    color: #1ed760 !important;
+    transform: scale(1.2) rotate(8deg);
   }
 </style>
 
