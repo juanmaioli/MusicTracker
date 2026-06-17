@@ -3,4 +3,6 @@ node_modules/
 musictracker.db
 GEMINI.md
 public/images/
+logs/
+
 

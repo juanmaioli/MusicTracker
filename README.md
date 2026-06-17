@@ -11,7 +11,7 @@
 *   **🖼️ Galería Interactiva:** En la sección de detalles de cada artista se visualizan hasta 40 fotos en una galería interactiva con tira de miniaturas, visor principal de alta resolución y navegación por teclado (flechas `←` y `→`).
 *   **🔍 Búsqueda Dinámica con Skeleton Loaders:** Interfaz de búsqueda interactiva basada en AJAX que renderiza placeholders de carga animados (Skeleton Loaders) sin recargas completas de página.
 *   **⚡ Cacheo de Portadas Fallidas (Cover Art Archive):** Marcado automático de imágenes inexistentes con el valor centinela `'NO_COVER'` para evitar peticiones HTTP 404 redundantes y acelerar las sincronizaciones de álbumes consecutivas.
-*   **📊 Logs de Carga en Consola:** Registros secuenciales explícitos en la terminal del backend (`[Importador]`, `[Sincronizador]`, `[Batch]`) para un monitoreo preciso del progreso de importación y base de datos.
+*   **📊 Sistema de Logs Persistentes:** Registros secuenciales explícitos impresos en consola y guardados localmente en [logs/importaciones.log](file:///home/juan/Documentos/Dev/Apps/MusicTracker/logs/importaciones.log) con formato de hora regional (es_AR) para auditar importaciones de artistas y álbumes.
 *   **🗄️ SQLite local:** Utiliza la base de datos `better-sqlite3` para un rendimiento asombroso y transacciones ACID que garantizan la consistencia de datos durante la importación.
 *   **⭐ Calificación Interactiva y Favoritos:** Permite puntuar álbumes (0 a 5 estrellas) de forma interactiva con efecto hover estilo ShowTracker, y marcar pistas como favoritas mediante solicitudes asíncronas (AJAX).
 *   **🔴 UI Premium en Modo Oscuro:** Interfaz moderna con Bootstrap 5.3, glassmorphism, sombras sutiles y acentos en rojo marca.
@@ -114,7 +114,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.14.0 (Actual)
+### v1.15.0 (Actual)
+*   **📂 Logs Persistentes en Archivo:** Implementación de un servicio de logging personalizado (`services/logger.js`) que escribe todos los eventos de importación y sincronización en un archivo local (`logs/importaciones.log`) con fecha/hora local de Argentina, además de imprimirlos en la consola del servidor. Se añadió la exclusión de esta carpeta en `.gitignore`.
+
+### v1.14.0
 *   **📊 Logs Detallados de Carga:** Inyección de logs explícitos en la consola del backend (`[Importador]`, `[Sincronizador]`, `[Batch]`) que permiten hacer un seguimiento y monitorear paso a paso la importación individual, la importación en lote y la sincronización de álbumes.
 *   **🔍 Búsqueda Dinámica con Skeleton Loaders:** Se implementó una interfaz asíncrona de búsqueda mediante AJAX en Last.fm que renderiza Skeleton Loaders animados (estructura de carga) sin recargar la página.
 *   **⚡ Cacheo de Portadas Fallidas (Cover Art Archive):** Almacenamiento local de portadas inexistentes bajo el identificador `'NO_COVER'` para prevenir consultas HTTP redundantes 404 y acelerar drásticamente los tiempos de sincronización subsiguientes.
