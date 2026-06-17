@@ -161,7 +161,11 @@ function formatBiography(text) {
     %>
       <!-- Galería de Fotos Interactiva al estilo ShowTracker -->
       <div class="glass-card p-4 mb-4">
-        <h2 class="h4 fw-bold mb-4 d-flex align-items-center gap-2"><i class="bi bi-images text-danger me-2"></i>Fotos</h2>
+        <h2 class="h4 fw-bold mb-4 d-flex align-items-center gap-2">
+          <i class="bi bi-images text-danger"></i>
+          <span>Fotos</span>
+          <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill fs-6 fw-normal"><%= artist.imagesList.length %></span>
+        </h2>
         
         <div class="d-flex flex-column align-items-center">
           <!-- Visor Principal -->

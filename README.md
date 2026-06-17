@@ -111,7 +111,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.13.0 (Actual)
+### v1.13.1 (Actual)
+*   **🖼️ Contador de Fotos en Galería:** Se incorporó un badge circular dinámico al lado del título "Fotos" en la vista detallada del artista para cuantificar y mostrar la cantidad exacta de imágenes cargadas en su galería.
+
+### v1.13.0
 *   **🔍 Filtro de Artistas en Inicio:** Se implementó una barra de búsqueda en la cabecera del Dashboard principal para filtrar artistas en tiempo real sin recargar la página. Incluye un mensaje de advertencia visual interactivo si no hay coincidencias.
 
 ### v1.12.1
