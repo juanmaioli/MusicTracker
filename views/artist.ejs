@@ -75,7 +75,7 @@ function formatDuration(ms) {
     %>
       <!-- Galería de Fotos Interactiva al estilo ShowTracker -->
       <div class="glass-card p-4 mb-4">
-        <h2 class="h4 fw-bold mb-4 d-flex align-items-center gap-2"><i class="bi bi-images text-danger me-2"></i>Galería de Fotos</h2>
+        <h2 class="h4 fw-bold mb-4 d-flex align-items-center gap-2"><i class="bi bi-images text-danger me-2"></i>Fotos</h2>
         
         <div class="d-flex flex-column align-items-center">
           <!-- Visor Principal -->
@@ -107,7 +107,7 @@ function formatDuration(ms) {
       <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
         <h2 class="h3 fw-bold m-0 d-flex align-items-center gap-2">
           <i class="bi bi-disc-fill text-danger"></i>
-          <span>Discografía y Canciones</span>
+          <span>Albums</span>
           <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill fs-6 fw-normal"><%= albums.length %></span>
         </h2>
         <form action="/artists/<%= artist.id %>/sync-albums" method="POST" id="syncAlbumsForm">
@@ -129,6 +129,8 @@ function formatDuration(ms) {
                        class="rounded object-fit-cover shadow-sm album-cover-clickable cursor-zoom" 
                        style="width: 55px; height: 55px;" 
                        data-album-title="<%= album.title %>" 
+                       data-album-year="<%= album.release_year || '' %>"
+                       data-album-rating="<%= album.user_rating || 0 %>"
                        data-cover-url="<%= album.cover_image %>" 
                        data-tracks="<%= Buffer.from(JSON.stringify(album.tracks)).toString('base64') %>"
                        title="Ver canciones y portada">
@@ -136,6 +138,8 @@ function formatDuration(ms) {
                   <div class="rounded bg-secondary d-flex align-items-center justify-content-center text-dark shadow-sm album-cover-clickable cursor-zoom" 
                        style="width: 55px; height: 55px;" 
                        data-album-title="<%= album.title %>" 
+                       data-album-year="<%= album.release_year || '' %>"
+                       data-album-rating="<%= album.user_rating || 0 %>"
                        data-cover-url="" 
                        data-tracks="<%= Buffer.from(JSON.stringify(album.tracks)).toString('base64') %>"
                        title="Ver canciones">
@@ -327,6 +331,8 @@ function formatDuration(ms) {
           e.stopPropagation();
           const coverUrl = img.dataset.coverUrl;
           const albumTitle = img.dataset.albumTitle;
+          const albumYear = img.dataset.albumYear;
+          const albumRating = parseInt(img.dataset.albumRating || '0', 10);
           const tracksDataRaw = img.dataset.tracks;
           
           // Establecer la imagen de portada
@@ -338,7 +344,26 @@ function formatDuration(ms) {
             coverModalImgContainer.style.display = 'none';
           }
 
-          coverModalLabel.innerText = albumTitle;
+          // Establecer título con año y calificación
+          coverModalLabel.textContent = albumTitle;
+          if (albumYear) {
+            const yearSpan = document.createElement('span');
+            yearSpan.className = 'text-secondary fs-6 fw-normal ms-2';
+            yearSpan.textContent = `(${albumYear})`;
+            coverModalLabel.appendChild(yearSpan);
+          }
+          if (albumRating > 0) {
+            const starsContainer = document.createElement('span');
+            starsContainer.className = 'ms-2 d-inline-flex align-items-center gap-1 fs-6';
+            starsContainer.style.userSelect = 'none';
+            for (let i = 1; i <= 5; i++) {
+              const starSpan = document.createElement('span');
+              starSpan.style.color = i <= albumRating ? '#ffc107' : '#6c757d';
+              starSpan.textContent = i <= albumRating ? '★' : '☆';
+              starsContainer.appendChild(starSpan);
+            }
+            coverModalLabel.appendChild(starsContainer);
+          }
 
           // Cargar canciones
           tracksTableBody.innerHTML = '';
