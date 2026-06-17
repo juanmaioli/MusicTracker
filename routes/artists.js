@@ -8,9 +8,13 @@ const musicbrainz = require('../services/musicbrainz');
 // Buscar artistas en Last.fm
 router.get('/search', async (req, res) => {
   const query = req.query.q || '';
+  const isAjax = req.query.ajax === '1';
   let results = [];
   if (query.trim() !== '') {
     results = await lastfm.searchArtists(query);
+  }
+  if (isAjax) {
+    return res.json({ query, results });
   }
   res.render('search', { query, results, title: 'Buscar Artistas' });
 });
@@ -44,15 +48,20 @@ router.post('/add/:id', async (req, res) => {
   req.setTimeout(180000); // 3 minutos para prevenir timeouts en descargas de galerías grandes
   const artistId = req.params.id; // El id es el slug de Last.fm
 
+  console.log(`[Importador] Iniciando importación del artista slug: "${artistId}"`);
+
   // Verificar si ya existe
   const exists = db.prepare('SELECT id FROM artists WHERE id = ?').get(artistId);
   if (exists) {
+    console.log(`[Importador] El artista slug "${artistId}" ya existe en SQLite. Redirigiendo...`);
     return res.redirect(`/artists/${artistId}`);
   }
 
   try {
     // 1. Obtener detalles del artista y biografía
+    console.log(`[Importador] Buscando metadatos y biografía en Last.fm para slug "${artistId}"...`);
     const artistData = await lastfm.getArtistDetail(artistId);
+    console.log(`[Importador] Artista encontrado: "${artistData.name}". Descargando imagen principal y galería...`);
     
     // Descargar imagen de artista de forma local
     const localArtistImage = await imageDownloader.saveArtistImage(artistData.image, artistId);
@@ -63,23 +72,28 @@ router.post('/add/:id', async (req, res) => {
     // Descargar imágenes adicionales de la galería del artista
     const localArtistImages = await imageDownloader.saveArtistGallery(artistData.images, artistId);
     artistData.localImages = localArtistImages;
+    console.log(`[Importador] Fotos descargadas para "${artistData.name}". Galería local cuenta con ${localArtistImages.length} imágenes.`);
 
     // 2. Obtener álbumes y canciones desde MusicBrainz
+    console.log(`[Importador] Solicitando discografía y tracks a MusicBrainz para "${artistData.name}"...`);
     const mbData = await musicbrainz.getArtistAlbumsAndTracks(artistData.name);
 
     // 3. Descargar portadas y estructurar datos
+    console.log(`[Importador] MusicBrainz retornó ${mbData.length} lanzamientos aptos. Descargando portadas locales...`);
     const albumsWithTracks = [];
     for (const item of mbData) {
       const { album, tracks } = item;
       
-      // Descargar portada de álbum de forma local
-      const localAlbumCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
-      album.cover_image = localAlbumCover || null;
+      // Descargar portada de álbum de forma local si existe url, de lo contrario setear 'NO_COVER'
+      const localAlbumCover = album.cover_image ? await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id) : null;
+      album.cover_image = localAlbumCover || 'NO_COVER';
+      console.log(`[Importador] Procesado álbum: "${album.title}" (Cover: ${album.cover_image})`);
 
       albumsWithTracks.push({ album, tracks });
     }
 
     // 4. Inserción transaccional en SQLite
+    console.log(`[Importador] Guardando datos de "${artistData.name}" en SQLite transaccionalmente...`);
     const insertArtist = db.prepare(`
       INSERT OR IGNORE INTO artists (id, name, image, images, genres, notes, popularity, metadata)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -131,6 +145,7 @@ router.post('/add/:id', async (req, res) => {
     });
 
     addArtistTransaction(artistData, albumsWithTracks);
+    console.log(`[Importador] Inserción finalizada con éxito. Artista "${artistData.name}" y sus álbumes agregados.`);
 
     res.redirect(`/artists/${artistId}`);
   } catch (error) {
@@ -150,9 +165,13 @@ router.post('/:id/sync-albums', async (req, res) => {
     return res.status(404).render('error', { message: 'Artista no encontrado en la base de datos local.', title: 'Error' });
   }
 
+  console.log(`[Sincronizador] Sincronizando álbumes para artista: "${artist.name}" (ID: ${artistId})`);
+
   try {
     // 2. Obtener álbumes nuevos y canciones desde MusicBrainz
+    console.log(`[Sincronizador] Obteniendo discografía desde MusicBrainz para "${artist.name}"...`);
     const mbData = await musicbrainz.getArtistAlbumsAndTracks(artist.name);
+    console.log(`[Sincronizador] MusicBrainz retornó ${mbData.length} álbumes candidatos.`);
 
     // 3. Procesar álbumes
     const albumsWithTracks = [];
@@ -164,17 +183,20 @@ router.post('/:id/sync-albums', async (req, res) => {
 
       if (!existingAlbum) {
         // Si no existe, descargar portada
-        const localAlbumCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
-        album.cover_image = localAlbumCover || null;
+        console.log(`[Sincronizador] Nuevo álbum detectado: "${album.title}". Descargando portada...`);
+        const localAlbumCover = album.cover_image ? await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id) : null;
+        album.cover_image = localAlbumCover || 'NO_COVER';
         album.isNew = true;
 
         albumsWithTracks.push({ album, tracks });
       } else {
         // Si ya existe, actualizar metadatos vacíos o sin calificar
+        console.log(`[Sincronizador] Álbum existente en base local: "${album.title}". Evaluando actualizaciones de portada o rating...`);
         let updatedCover = existingAlbum.cover_image;
-        if (!existingAlbum.cover_image && album.cover_image) {
+        // Solo intentar si es nulo, vacío, o si antes no tenía cover_image (NO_COVER significa que ya se intentó y falló)
+        if ((!existingAlbum.cover_image || existingAlbum.cover_image === '') && album.cover_image) {
           const savedCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
-          if (savedCover) updatedCover = savedCover;
+          updatedCover = savedCover || 'NO_COVER';
         }
 
         const finalRating = (existingAlbum.user_rating === 0 || existingAlbum.user_rating === null) && album.user_rating > 0 ? album.user_rating : existingAlbum.user_rating;
@@ -193,6 +215,7 @@ router.post('/:id/sync-albums', async (req, res) => {
     }
 
     // 5. Inserción transaccional
+    console.log(`[Sincronizador] Guardando cambios de sincronización en SQLite...`);
     const insertAlbum = db.prepare(`
       INSERT OR IGNORE INTO albums (id, artist_id, title, cover_image, release_year, user_rating)
       VALUES (?, ?, ?, ?, ?, ?)
@@ -243,6 +266,7 @@ router.post('/:id/sync-albums', async (req, res) => {
     });
 
     syncAlbumsTransaction(albumsWithTracks);
+    console.log(`[Sincronizador] Sincronización finalizada correctamente para "${artist.name}".`);
 
     res.redirect(`/artists/${artistId}`);
   } catch (error) {
@@ -335,51 +359,66 @@ router.post('/batch-add', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Nombre de artista vacío' });
   }
 
+  console.log(`[Batch] Iniciando búsqueda e importación en lote para: "${name}"`);
+
   try {
     // 1. Buscar en Last.fm
+    console.log(`[Batch] Buscando en Last.fm el artista: "${name}"...`);
     const searchResults = await lastfm.searchArtists(name);
     if (!searchResults || searchResults.length === 0) {
+      console.log(`[Batch] No se encontró a "${name}" en Last.fm.`);
       return res.status(404).json({ success: false, error: `No se encontró a "${name}" en Last.fm` });
     }
 
     const foundArtist = searchResults[0];
     const artistId = foundArtist.id;
+    console.log(`[Batch] Mejor coincidencia encontrada: "${foundArtist.name}" (Slug: "${artistId}")`);
 
     // 2. Verificar si ya existe en SQLite
     const exists = db.prepare('SELECT id FROM artists WHERE id = ?').get(artistId);
     if (exists) {
+      console.log(`[Batch] El artista "${foundArtist.name}" (Slug: "${artistId}") ya existe en la base de datos local.`);
       return res.json({ success: true, alreadyExists: true, name: foundArtist.name, id: artistId });
     }
 
     // 3. Importar artista completo (lógica idéntica a /add/:id)
+    console.log(`[Batch] Importando metadatos detallados de "${foundArtist.name}"...`);
     const artistData = await lastfm.getArtistDetail(artistId);
     
     // Descargar imagen principal
+    console.log(`[Batch] Descargando imagen principal de "${artistData.name}"...`);
     const localArtistImage = await imageDownloader.saveArtistImage(artistData.image, artistId);
     if (localArtistImage) {
       artistData.image = localArtistImage;
     }
 
     // Descargar galería
+    console.log(`[Batch] Descargando galería de fotos de "${artistData.name}"...`);
     const localArtistImages = await imageDownloader.saveArtistGallery(artistData.images, artistId);
     artistData.localImages = localArtistImages;
+    console.log(`[Batch] Galería de "${artistData.name}" guardada. Total imágenes descargadas: ${localArtistImages.length}`);
 
     // Descargar álbumes y canciones desde MusicBrainz
+    console.log(`[Batch] Solicitando discografía e información de tracks a MusicBrainz para "${artistData.name}"...`);
     const mbData = await musicbrainz.getArtistAlbumsAndTracks(artistData.name);
+    console.log(`[Batch] MusicBrainz retornó ${mbData.length} lanzamientos/álbumes.`);
 
     // Descargar portadas y estructurar datos
+    console.log(`[Batch] Descargando portadas locales para los álbumes de "${artistData.name}"...`);
     const albumsWithTracks = [];
     for (const item of mbData) {
       const { album, tracks } = item;
       
-      // Descargar portada de álbum de forma local
-      const localAlbumCover = await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id);
-      album.cover_image = localAlbumCover || null;
+      // Descargar portada de álbum de forma local si existe url, de lo contrario setear 'NO_COVER'
+      const localAlbumCover = album.cover_image ? await imageDownloader.saveAlbumImage(album.cover_image, artistId, album.id) : null;
+      album.cover_image = localAlbumCover || 'NO_COVER';
+      console.log(`[Batch] Procesado álbum: "${album.title}" (Cover: ${album.cover_image})`);
 
       albumsWithTracks.push({ album, tracks });
     }
 
     // Guardar en SQLite transaccionalmente
+    console.log(`[Batch] Guardando de forma transaccional a "${artistData.name}" y su discografía en SQLite...`);
     const insertArtist = db.prepare(`
       INSERT OR IGNORE INTO artists (id, name, image, images, genres, notes, popularity, metadata)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -431,10 +470,11 @@ router.post('/batch-add', async (req, res) => {
     });
 
     addArtistTransaction(artistData, albumsWithTracks);
+    console.log(`[Batch] Importación en lote finalizada con éxito para "${artistData.name}".`);
 
     res.json({ success: true, name: artistData.name, id: artistId });
   } catch (err) {
-    console.error('Error en importación batch de:', name, err);
+    console.error(`[Batch] Error en importación batch de "${name}":`, err);
     res.status(500).json({ success: false, error: err.message });
   }
 });

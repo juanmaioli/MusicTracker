@@ -9,6 +9,9 @@
 *   **🕵️ Scraping de Last.fm:** Obtiene biografías completas en español, discografías y listados de tracks sin necesidad de usar APIs de terceros ni tokens.
 *   **💾 Almacenamiento Local de Imágenes:** Descarga automáticamente fotos de artistas y portadas de álbumes a máxima resolución (`ar0`) en la carpeta pública local, evitando enlaces rotos externos.
 *   **🖼️ Galería Interactiva:** En la sección de detalles de cada artista se visualizan hasta 40 fotos en una galería interactiva con tira de miniaturas, visor principal de alta resolución y navegación por teclado (flechas `←` y `→`).
+*   **🔍 Búsqueda Dinámica con Skeleton Loaders:** Interfaz de búsqueda interactiva basada en AJAX que renderiza placeholders de carga animados (Skeleton Loaders) sin recargas completas de página.
+*   **⚡ Cacheo de Portadas Fallidas (Cover Art Archive):** Marcado automático de imágenes inexistentes con el valor centinela `'NO_COVER'` para evitar peticiones HTTP 404 redundantes y acelerar las sincronizaciones de álbumes consecutivas.
+*   **📊 Logs de Carga en Consola:** Registros secuenciales explícitos en la terminal del backend (`[Importador]`, `[Sincronizador]`, `[Batch]`) para un monitoreo preciso del progreso de importación y base de datos.
 *   **🗄️ SQLite local:** Utiliza la base de datos `better-sqlite3` para un rendimiento asombroso y transacciones ACID que garantizan la consistencia de datos durante la importación.
 *   **⭐ Calificación Interactiva y Favoritos:** Permite puntuar álbumes (0 a 5 estrellas) de forma interactiva con efecto hover estilo ShowTracker, y marcar pistas como favoritas mediante solicitudes asíncronas (AJAX).
 *   **🔴 UI Premium en Modo Oscuro:** Interfaz moderna con Bootstrap 5.3, glassmorphism, sombras sutiles y acentos en rojo marca.
@@ -111,7 +114,12 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.13.1 (Actual)
+### v1.14.0 (Actual)
+*   **📊 Logs Detallados de Carga:** Inyección de logs explícitos en la consola del backend (`[Importador]`, `[Sincronizador]`, `[Batch]`) que permiten hacer un seguimiento y monitorear paso a paso la importación individual, la importación en lote y la sincronización de álbumes.
+*   **🔍 Búsqueda Dinámica con Skeleton Loaders:** Se implementó una interfaz asíncrona de búsqueda mediante AJAX en Last.fm que renderiza Skeleton Loaders animados (estructura de carga) sin recargar la página.
+*   **⚡ Cacheo de Portadas Fallidas (Cover Art Archive):** Almacenamiento local de portadas inexistentes bajo el identificador `'NO_COVER'` para prevenir consultas HTTP redundantes 404 y acelerar drásticamente los tiempos de sincronización subsiguientes.
+
+### v1.13.1
 *   **🖼️ Contador de Fotos en Galería:** Se incorporó un badge circular dinámico al lado del título "Fotos" en la vista detallada del artista para cuantificar y mostrar la cantidad exacta de imágenes cargadas en su galería.
 
 ### v1.13.0

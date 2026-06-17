@@ -7,6 +7,54 @@
   .artist-link:hover {
     color: var(--brand-color) !important;
   }
+  
+  /* Skeleton Loading Styles */
+  .skeleton-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 1rem;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .skeleton-img {
+    height: 250px;
+    background: rgba(255, 255, 255, 0.05);
+    position: relative;
+  }
+  .skeleton-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
+  }
+  .skeleton-text {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 4px;
+    margin-bottom: 0.75rem;
+  }
+  .skeleton-title {
+    height: 1.5rem;
+    width: 70%;
+  }
+  .skeleton-btn {
+    height: 2.25rem;
+    width: 100%;
+    border-radius: 50px;
+    background: rgba(255, 255, 255, 0.05);
+    margin-top: 1.5rem;
+  }
+  .skeleton-pulse {
+    animation: skeleton-pulse 1.5s infinite ease-in-out;
+  }
+  @keyframes skeleton-pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
 </style>
 
 <div class="row mb-5">
@@ -21,68 +69,187 @@
   </div>
 </div>
 
-<% if (query && results.length === 0) { %>
-  <div class="row">
-    <div class="col-lg-6 mx-auto text-center py-5">
-      <div class="glass-card p-5">
-        <i class="bi bi-music-note-beamed fs-1 text-muted mb-3"></i>
-        <h3>No se encontraron resultados</h3>
-        <p class="text-secondary">No pudimos encontrar ningún artista en Last.fm para "<%= query %>". Probá con otra búsqueda.</p>
-      </div>
-    </div>
-  </div>
-<% } else if (results.length > 0) { %>
-  <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    <% results.forEach(artist => { %>
-      <div class="col">
-        <div class="card h-100 glass-card text-white overflow-hidden d-flex flex-column justify-content-between">
-          <div class="position-relative">
-            <% if (artist.image) { %>
-              <img src="<%= artist.image %>" class="card-img-top object-fit-cover" style="height: 250px;" alt="<%= artist.name %>">
-            <% } else { %>
-              <div class="bg-secondary d-flex align-items-center justify-content-center text-dark" style="height: 250px;">
-                <i class="bi bi-person-fill display-1"></i>
-              </div>
-            <% } %>
-            <div class="position-absolute top-0 end-0 m-3">
-              <span class="badge bg-dark bg-opacity-75 text-danger border border-danger px-2 py-1">
-                <i class="bi bi-star-fill me-1"></i><%= artist.popularity %>% coinc.
-              </span>
-            </div>
-          </div>
-          <div class="card-body d-flex flex-column justify-content-between p-4">
-            <div>
-              <h2 class="card-title h4 fw-bold mb-3">
-                <a href="https://www.last.fm/es/music/<%= artist.id %>" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none artist-link d-inline-flex align-items-center gap-2">
-                  <%= artist.name %>
-                  <i class="bi bi-box-arrow-up-right text-secondary" style="font-size: 0.75rem;" aria-hidden="true"></i>
-                </a>
-              </h2>
-            </div>
-            
-            <form action="/artists/add/<%= artist.id %>" method="POST" class="import-form">
-              <button type="submit" class="btn btn-spotify w-100 d-flex align-items-center justify-content-center gap-2">
-                <i class="bi bi-plus-circle-fill"></i>
-                <span>Seguir e Importar</span>
-              </button>
-            </form>
-          </div>
+<div id="resultsContainer">
+  <% if (query && results.length === 0) { %>
+    <div class="row">
+      <div class="col-lg-6 mx-auto text-center py-5">
+        <div class="glass-card p-5">
+          <i class="bi bi-music-note-beamed fs-1 text-muted mb-3"></i>
+          <h3>No se encontraron resultados</h3>
+          <p class="text-secondary">No pudimos encontrar ningún artista en Last.fm para "<%= query %>". Probá con otra búsqueda.</p>
         </div>
       </div>
-    <% }) %>
-  </div>
-<% } %>
+    </div>
+  <% } else if (results.length > 0) { %>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      <% results.forEach(artist => { %>
+        <div class="col">
+          <div class="card h-100 glass-card text-white overflow-hidden d-flex flex-column justify-content-between">
+            <div class="position-relative">
+              <% if (artist.image) { %>
+                <img src="<%= artist.image %>" class="card-img-top object-fit-cover" style="height: 250px;" alt="<%= artist.name %>">
+              <% } else { %>
+                <div class="bg-secondary d-flex align-items-center justify-content-center text-dark" style="height: 250px;">
+                  <i class="bi bi-person-fill display-1"></i>
+                </div>
+              <% } %>
+              <div class="position-absolute top-0 end-0 m-3">
+                <span class="badge bg-dark bg-opacity-75 text-danger border border-danger px-2 py-1">
+                  <i class="bi bi-star-fill me-1"></i><%= artist.popularity %>% coinc.
+                </span>
+              </div>
+            </div>
+            <div class="card-body d-flex flex-column justify-content-between p-4">
+              <div>
+                <h2 class="card-title h4 fw-bold mb-3">
+                  <a href="https://www.last.fm/es/music/<%= artist.id %>" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none artist-link d-inline-flex align-items-center gap-2">
+                    <%= artist.name %>
+                    <i class="bi bi-box-arrow-up-right text-secondary" style="font-size: 0.75rem;" aria-hidden="true"></i>
+                  </a>
+                </h2>
+              </div>
+              
+              <form action="/artists/add/<%= artist.id %>" method="POST" class="import-form">
+                <button type="submit" class="btn btn-spotify w-100 d-flex align-items-center justify-content-center gap-2">
+                  <i class="bi bi-plus-circle-fill"></i>
+                  <span>Seguir e Importar</span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+</div>
 
 <script>
-  document.querySelectorAll('.import-form').forEach(form => {
-    form.addEventListener('submit', function() {
-      const button = this.querySelector('button[type="submit"]');
-      button.disabled = true;
-      button.innerHTML = `
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-        <span>Scrapeando e Importando...</span>
-      `;
-    });
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchForm = document.querySelector('form[action="/artists/search"]');
+    const searchInput = searchForm ? searchForm.querySelector('input[name="q"]') : null;
+    const resultsContainer = document.getElementById('resultsContainer');
+
+    if (searchForm) {
+      searchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        if (!query) return;
+
+        // Actualizar la URL sin recargar la página
+        const newUrl = `/artists/search?q=${encodeURIComponent(query)}`;
+        window.history.pushState({ path: newUrl }, '', newUrl);
+
+        // Renderizar Skeleton Loaders
+        resultsContainer.innerHTML = `
+          <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            ${Array(6).fill().map(() => `
+              <div class="col">
+                <div class="skeleton-card skeleton-pulse">
+                  <div class="skeleton-img"></div>
+                  <div class="skeleton-body">
+                    <div>
+                      <div class="skeleton-text skeleton-title"></div>
+                    </div>
+                    <div class="skeleton-btn"></div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+
+        try {
+          const response = await fetch(`/artists/search?q=${encodeURIComponent(query)}&ajax=1`);
+          const data = await response.json();
+
+          if (data.results && data.results.length > 0) {
+            let html = '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">';
+            data.results.forEach(artist => {
+              const imageHtml = artist.image 
+                ? `<img src="${artist.image}" class="card-img-top object-fit-cover" style="height: 250px;" alt="${artist.name}">`
+                : `<div class="bg-secondary d-flex align-items-center justify-content-center text-dark" style="height: 250px;">
+                     <i class="bi bi-person-fill display-1"></i>
+                   </div>`;
+
+              html += `
+                <div class="col">
+                  <div class="card h-100 glass-card text-white overflow-hidden d-flex flex-column justify-content-between">
+                    <div class="position-relative">
+                      ${imageHtml}
+                      <div class="position-absolute top-0 end-0 m-3">
+                        <span class="badge bg-dark bg-opacity-75 text-danger border border-danger px-2 py-1">
+                          <i class="bi bi-star-fill me-1"></i>${artist.popularity}% coinc.
+                        </span>
+                      </div>
+                    </div>
+                    <div class="card-body d-flex flex-column justify-content-between p-4">
+                      <div>
+                        <h2 class="card-title h4 fw-bold mb-3">
+                          <a href="https://www.last.fm/es/music/${artist.id}" target="_blank" rel="noopener noreferrer" class="text-white text-decoration-none artist-link d-inline-flex align-items-center gap-2">
+                            ${artist.name}
+                            <i class="bi bi-box-arrow-up-right text-secondary" style="font-size: 0.75rem;" aria-hidden="true"></i>
+                          </a>
+                        </h2>
+                      </div>
+                      
+                      <form action="/artists/add/${artist.id}" method="POST" class="import-form">
+                        <button type="submit" class="btn btn-spotify w-100 d-flex align-items-center justify-content-center gap-2">
+                          <i class="bi bi-plus-circle-fill"></i>
+                          <span>Seguir e Importar</span>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+            html += '</div>';
+            resultsContainer.innerHTML = html;
+            bindImportFormEvents();
+          } else {
+            resultsContainer.innerHTML = `
+              <div class="row">
+                <div class="col-lg-6 mx-auto text-center py-5">
+                  <div class="glass-card p-5">
+                    <i class="bi bi-music-note-beamed fs-1 text-muted mb-3"></i>
+                    <h3>No se encontraron resultados</h3>
+                    <p class="text-secondary">No pudimos encontrar ningún artista en Last.fm para "${query}". Probá con otra búsqueda.</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          }
+        } catch (err) {
+          console.error(err);
+          resultsContainer.innerHTML = `
+            <div class="row">
+              <div class="col-lg-6 mx-auto text-center py-5">
+                <div class="glass-card p-5">
+                  <i class="bi bi-exclamation-triangle-fill fs-1 text-danger mb-3"></i>
+                  <h3>Error en la búsqueda</h3>
+                  <p class="text-secondary">Ocurrió un fallo de red o servidor al intentar buscar a "${query}".</p>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+      });
+    }
+
+    function bindImportFormEvents() {
+      document.querySelectorAll('.import-form').forEach(form => {
+        form.addEventListener('submit', function() {
+          const button = this.querySelector('button[type="submit"]');
+          button.disabled = true;
+          button.innerHTML = `
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>Scrapeando e Importando...</span>
+          `;
+        });
+      });
+    }
+
+    bindImportFormEvents();
   });
 </script>
 
