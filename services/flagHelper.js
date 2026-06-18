@@ -47,7 +47,13 @@ function getFlagPath(locationStr) {
     'canada': 'canada',
     'australia': 'australia',
     'new zealand': 'nuevazelandia',
-    'italy': 'italia'
+    'italy': 'italia',
+    'italia': 'italia',
+    'china': 'china',
+    'bosnia': 'bosniaherzegovina',
+    'herzegovina': 'bosniaherzegovina',
+    'bosnia y herzegovina': 'bosniaherzegovina',
+    'bosnia and herzegovina': 'bosniaherzegovina'
   };
 
   for (const [key, val] of Object.entries(termMap)) {
