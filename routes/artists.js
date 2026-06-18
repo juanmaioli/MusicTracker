@@ -313,6 +313,24 @@ router.post('/:id/notes', (req, res) => {
   res.redirect(`/artists/${artistId}`);
 });
 
+// Actualizar imagen principal del artista
+router.post('/:id/set-image', (req, res) => {
+  const artistId = req.params.id;
+  const { imageUrl } = req.body;
+
+  if (!imageUrl) {
+    return res.status(400).json({ success: false, error: 'Falta la URL de la imagen.' });
+  }
+
+  try {
+    db.prepare('UPDATE artists SET image = ? WHERE id = ?').run(imageUrl, artistId);
+    res.json({ success: true, imageUrl });
+  } catch (error) {
+    console.error('Error al actualizar la imagen del artista:', error);
+    res.status(500).json({ success: false, error: 'Ocurrió un error al actualizar la imagen.' });
+  }
+});
+
 // Eliminar artista de SQLite (borrado en cascada)
 router.post('/:id/delete', (req, res) => {
   const artistId = req.params.id;

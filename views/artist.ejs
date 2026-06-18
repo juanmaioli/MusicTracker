@@ -53,13 +53,15 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
     <div class="glass-card p-4 text-center sticky-lg-top" style="top: 100px; z-index: 1;">
       
       <div class="position-relative mb-4">
-        <% if (artist.image) { %>
-          <img src="<%= artist.image %>" alt="<%= artist.name %>" class="img-fluid rounded-4 shadow-lg object-fit-cover w-100" style="max-height: 300px;">
-        <% } else { %>
-          <div class="rounded-4 bg-secondary d-flex align-items-center justify-content-center text-dark" style="height: 300px;">
-            <i class="bi bi-person-fill display-1"></i>
-          </div>
-        <% } %>
+        <div id="mainArtistImgWrapper">
+          <% if (artist.image) { %>
+            <img id="mainArtistImg" src="<%= artist.image %>" alt="<%= artist.name %>" class="img-fluid rounded-4 shadow-lg object-fit-cover w-100" style="max-height: 300px;">
+          <% } else { %>
+            <div id="mainArtistImgPlaceholder" class="rounded-4 bg-secondary d-flex align-items-center justify-content-center text-dark" style="height: 300px;">
+              <i class="bi bi-person-fill display-1"></i>
+            </div>
+          <% } %>
+        </div>
         
         <% const mainFlagPath = getFlagPath(artistMetadata['Lugar de nacimiento'] || artistMetadata['Formado en']); %>
         <% if (mainFlagPath) { %>
@@ -439,15 +441,20 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
     transform: scale(1.2) rotate(8deg);
   }
 
-  /* Estilos de alto contraste para el enlace externo del Lightbox */
-  .lightbox-external-link {
+  /* Estilos de alto contraste para el enlace externo y botones del Lightbox */
+  .lightbox-external-link, .lightbox-action-btn {
     color: rgba(255, 255, 255, 0.95) !important;
     font-weight: 500;
     transition: color 0.15s ease-in-out;
   }
-  .lightbox-external-link:hover {
+  .lightbox-external-link:hover, .lightbox-action-btn:hover {
     color: var(--brand-color) !important;
     text-decoration: underline !important;
+  }
+  .lightbox-action-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
   }
 
   /* Desenfoque de fondo premium para el modal del Lightbox */
@@ -551,6 +558,59 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
       if (externalLink) externalLink.href = nextImgUrl;
       lightboxImg.style.opacity = '1';
     }, 150);
+  }
+
+  async function setAsMainArtistImage() {
+    const lightboxImg = document.getElementById('lightboxImg');
+    const setBtn = document.getElementById('setMainImageBtn');
+    const setBtnText = document.getElementById('setMainImageBtnText');
+    if (!lightboxImg || !setBtn || !setBtnText) return;
+    
+    const imageUrl = lightboxImg.getAttribute('src');
+    if (!imageUrl) return;
+    
+    setBtn.disabled = true;
+    const originalText = setBtnText.textContent;
+    setBtnText.textContent = 'Estableciendo...';
+    
+    try {
+      const response = await fetch(`/artists/<%= artist.id %>/set-image`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ imageUrl })
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        const imgWrapper = document.getElementById('mainArtistImgWrapper');
+        if (imgWrapper) {
+          let mainImg = document.getElementById('mainArtistImg');
+          if (mainImg) {
+            mainImg.src = result.imageUrl;
+          } else {
+            imgWrapper.innerHTML = `<img id="mainArtistImg" src="\${result.imageUrl}" alt="<%= artist.name %>" class="img-fluid rounded-4 shadow-lg object-fit-cover w-100" style="max-height: 300px;">`;
+          }
+        }
+        
+        setBtnText.textContent = '¡Foto principal establecida!';
+        setTimeout(() => {
+          setBtnText.textContent = originalText;
+          setBtn.disabled = false;
+        }, 2000);
+      } else {
+        alert('Error al establecer la imagen: ' + (result.error || 'Ocurrió un error inesperado.'));
+        setBtnText.textContent = originalText;
+        setBtn.disabled = false;
+      }
+    } catch (err) {
+      console.error('Error al establecer la imagen principal:', err);
+      alert('Error de red al establecer la imagen.');
+      setBtnText.textContent = originalText;
+      setBtn.disabled = false;
+    }
   }
 
   // Teclado para navegación de fotos y de grid anterior
@@ -867,6 +927,11 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
             <i class="bi bi-box-arrow-up-right"></i>
             <span>Abrir en pestaña nueva</span>
           </a>
+          <span class="text-white-50">|</span>
+          <button id="setMainImageBtn" onclick="setAsMainArtistImage()" class="lightbox-action-btn text-decoration-none d-inline-flex align-items-center gap-1 small" title="Establecer como foto principal">
+            <i class="bi bi-image"></i>
+            <span id="setMainImageBtnText">Usar como foto principal</span>
+          </button>
         </div>
       </div>
     </div>

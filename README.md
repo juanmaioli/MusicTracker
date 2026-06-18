@@ -114,7 +114,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.17.0 (Actual)
+### v1.18.0 (Actual)
+*   **🖼️ Selección de Foto Principal:** Se agregó un botón en la barra inferior del Lightbox de fotos del artista ("Usar como foto principal") al lado de "Abrir en pestaña nueva". Al hacer clic, se actualiza de forma asíncrona (`fetch`) la imagen del artista en SQLite y en la interfaz (perfil lateral) sin recargar la página.
+
+### v1.17.0
 *   **🚩 Insignias de banderas de países:** Se implementó un sistema inteligente para mostrar la bandera del país de nacimiento o formación del artista.
 *   **🖼️ Superposición sobre la foto de perfil:** Las banderas se muestran superpuestas en la esquina inferior derecha de la foto principal del artista dentro de un círculo negro translúcido con borde rojo.
 *   **🏠 Integración en el Dashboard:** Las insignias de banderas circulares de tamaño adaptado se muestran en cada tarjeta de artista en la grilla del inicio (Dashboard).
