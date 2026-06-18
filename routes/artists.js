@@ -331,6 +331,42 @@ router.post('/:id/set-image', (req, res) => {
   }
 });
 
+// Actualizar metadata del artista
+router.post('/:id/metadata', (req, res) => {
+  const artistId = req.params.id;
+  const { formedIn, birthDate, birthPlace, activeYears, deceased } = req.body;
+
+  try {
+    const artist = db.prepare('SELECT metadata FROM artists WHERE id = ?').get(artistId);
+    let metadata = {};
+    if (artist && artist.metadata) {
+      try {
+        metadata = JSON.parse(artist.metadata);
+      } catch (e) {
+        metadata = {};
+      }
+    }
+
+    if (formedIn !== undefined) metadata['Formado en'] = formedIn.trim();
+    if (birthDate !== undefined) metadata['Fecha de nacimiento'] = birthDate.trim();
+    if (birthPlace !== undefined) metadata['Lugar de nacimiento'] = birthPlace.trim();
+    if (activeYears !== undefined) metadata['Años de actividad'] = activeYears.trim();
+    if (deceased !== undefined) metadata['Fallecido'] = deceased.trim();
+
+    for (const key of ['Formado en', 'Fecha de nacimiento', 'Lugar de nacimiento', 'Años de actividad', 'Fallecido']) {
+      if (metadata[key] === '') {
+        delete metadata[key];
+      }
+    }
+
+    db.prepare('UPDATE artists SET metadata = ? WHERE id = ?').run(JSON.stringify(metadata), artistId);
+    res.json({ success: true, metadata });
+  } catch (error) {
+    console.error('Error al actualizar la metadata del artista:', error);
+    res.status(500).json({ success: false, error: 'Ocurrió un error al actualizar los datos.' });
+  }
+});
+
 // Eliminar artista de SQLite (borrado en cascada)
 router.post('/:id/delete', (req, res) => {
   const artistId = req.params.id;

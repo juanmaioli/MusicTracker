@@ -114,7 +114,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.18.1 (Actual)
+### v1.19.0 (Actual)
+*   **📝 Ficha Técnica Editable:** Se implementó la edición manual para los campos de la ficha técnica del artista (Formado en, Fecha de nacimiento, Lugar de nacimiento, Años de actividad, Fallecido). Los cambios se guardan de forma asíncrona (`fetch`) y actualizan el bloque lateral sin perder otros metadatos (como miembros de bandas), forzando el recargo para actualizar la bandera asociada.
+
+### v1.18.1
 *   **🐛 Correcciones en Banderas y Mapeos:** Se agregaron e integraron las banderas oficiales de China (`china.png`) e Italia (`italia.png`) en tamaño adaptado. Se corrigió un espacio en el nombre de la bandera de Ascensión y se renombró la de Tristán de Acuña a caracteres ASCII (`tristandeacuna.png`) para resolver la coincidencia con el normalizador. Asimismo, se robustecieron las equivalencias de mapeo en el helper para Bosnia y Herzegovina.
 
 ### v1.18.0

@@ -86,52 +86,53 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
         <% }) %>
       </div>
 
-      <% if (hasMetadata) { %>
-        <div class="mb-3 mt-3 text-start bg-dark bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-10">
-          <div class="d-flex flex-column gap-2" style="font-size: 0.85rem;">
-            <% if (artistMetadata['Años de actividad']) { %>
-              <div>
-                <span class="text-secondary fw-semibold">Años de actividad:</span>
-                <span class="text-white-50 ms-1"><%= artistMetadata['Años de actividad'] %></span>
-              </div>
-            <% } %>
-            <% if (artistMetadata['Formado en']) { %>
-              <div>
-                <span class="text-secondary fw-semibold">Formado en:</span>
-                <span class="text-white-50 ms-1"><%= artistMetadata['Formado en'] %></span>
-              </div>
-            <% } %>
-            <% if (artistMetadata['Fecha de nacimiento']) { %>
-              <div>
-                <span class="text-secondary fw-semibold">Fecha de nacimiento:</span>
-                <span class="text-white-50 ms-1"><%= artistMetadata['Fecha de nacimiento'] %></span>
-              </div>
-            <% } %>
-            <% if (artistMetadata['Lugar de nacimiento']) { %>
-              <div>
-                <span class="text-secondary fw-semibold">Lugar de nacimiento:</span>
-                <span class="text-white-50 ms-1"><%= artistMetadata['Lugar de nacimiento'] %></span>
-              </div>
-            <% } %>
-            <% if (artistMetadata['Fallecido']) { %>
-              <div>
-                <span class="text-secondary fw-semibold">Fallecido:</span>
-                <span class="text-white-50 ms-1"><%= artistMetadata['Fallecido'] %></span>
-              </div>
-            <% } %>
-            <% if (artistMetadata['Miembros'] && Array.isArray(artistMetadata['Miembros']) && artistMetadata['Miembros'].length > 0) { %>
-              <div class="mt-1">
-                <span class="text-secondary fw-semibold">Miembros:</span>
-                <ul class="list-unstyled text-white-50 ms-2 mt-1 mb-0 ps-2" style="font-size: 0.8rem; border-left: 2px solid rgba(229, 9, 20, 0.4);">
-                  <% artistMetadata['Miembros'].forEach(member => { %>
-                    <li class="py-0.5"><%= member %></li>
-                  <% }) %>
-                </ul>
-              </div>
-            <% } %>
+      <div class="mb-3 mt-3 text-start bg-dark bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-10">
+        <div class="d-flex flex-column gap-2" id="metadataList" style="font-size: 0.85rem;">
+          <% if (!hasMetadata) { %>
+            <p id="noMetadataPlaceholder" class="text-secondary small m-0 text-center py-2">Ficha técnica vacía.</p>
+          <% } %>
+          
+          <div id="metaActiveYearsContainer" style="<%= artistMetadata['Años de actividad'] ? '' : 'display: none;' %>">
+            <span class="text-secondary fw-semibold">Años de actividad:</span>
+            <span id="metaActiveYears" class="text-white-50 ms-1"><%= artistMetadata['Años de actividad'] || '' %></span>
           </div>
+          
+          <div id="metaFormedInContainer" style="<%= artistMetadata['Formado en'] ? '' : 'display: none;' %>">
+            <span class="text-secondary fw-semibold">Formado en:</span>
+            <span id="metaFormedIn" class="text-white-50 ms-1"><%= artistMetadata['Formado en'] || '' %></span>
+          </div>
+          
+          <div id="metaBirthDateContainer" style="<%= artistMetadata['Fecha de nacimiento'] ? '' : 'display: none;' %>">
+            <span class="text-secondary fw-semibold">Fecha de nacimiento:</span>
+            <span id="metaBirthDate" class="text-white-50 ms-1"><%= artistMetadata['Fecha de nacimiento'] || '' %></span>
+          </div>
+          
+          <div id="metaBirthPlaceContainer" style="<%= artistMetadata['Lugar de nacimiento'] ? '' : 'display: none;' %>">
+            <span class="text-secondary fw-semibold">Lugar de nacimiento:</span>
+            <span id="metaBirthPlace" class="text-white-50 ms-1"><%= artistMetadata['Lugar de nacimiento'] || '' %></span>
+          </div>
+          
+          <div id="metaDeceasedContainer" style="<%= artistMetadata['Fallecido'] ? '' : 'display: none;' %>">
+            <span class="text-secondary fw-semibold">Fallecido:</span>
+            <span id="metaDeceased" class="text-white-50 ms-1"><%= artistMetadata['Fallecido'] || '' %></span>
+          </div>
+
+          <% if (artistMetadata['Miembros'] && Array.isArray(artistMetadata['Miembros']) && artistMetadata['Miembros'].length > 0) { %>
+            <div id="metaMembersContainer" class="mt-1">
+              <span class="text-secondary fw-semibold">Miembros:</span>
+              <ul class="list-unstyled text-white-50 ms-2 mt-1 mb-0 ps-2" style="font-size: 0.8rem; border-left: 2px solid rgba(229, 9, 20, 0.4);">
+                <% artistMetadata['Miembros'].forEach(member => { %>
+                  <li class="py-0.5"><%= member %></li>
+                <% }) %>
+              </ul>
+            </div>
+          <% } %>
         </div>
-      <% } %>
+        
+        <button type="button" class="btn btn-sm btn-outline-danger w-100 mt-3 rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editMetadataModal">
+          <i class="bi bi-pencil-square me-1"></i> Editar Ficha
+        </button>
+      </div>
 
       <hr class="border-secondary border-opacity-25 my-3">
 
@@ -833,6 +834,46 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
       });
     });
   });
+
+  async function saveArtistMetadata(event) {
+    event.preventDefault();
+    const saveBtn = document.getElementById('saveMetadataBtn');
+    if (!saveBtn) return;
+    
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Guardando...';
+    
+    const formedIn = document.getElementById('inputFormedIn').value;
+    const birthDate = document.getElementById('inputBirthDate').value;
+    const birthPlace = document.getElementById('inputBirthPlace').value;
+    const activeYears = document.getElementById('inputActiveYears').value;
+    const deceased = document.getElementById('inputDeceased').value;
+    
+    try {
+      const response = await fetch(`/artists/<%= artist.id %>/metadata`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ formedIn, birthDate, birthPlace, activeYears, deceased })
+      });
+      
+      const result = await response.json();
+      if (result.success) {
+        window.location.reload();
+      } else {
+        alert('Error al guardar los cambios: ' + (result.error || 'Ocurrió un error inesperado.'));
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar Cambios';
+      }
+    } catch (err) {
+      console.error('Error al guardar la metadata:', err);
+      alert('Error de red al intentar guardar los datos.');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Guardar Cambios';
+    }
+  }
 </script>
 
 <!-- Modal de Visualización de Portada y Canciones -->
@@ -941,5 +982,47 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
 <!-- Librerías de Pinterest Masonry -->
 <script src="https://unpkg.com/imagesloaded@5/imagesloaded.pkgd.min.js"></script>
 <script src="https://unpkg.com/masonry-layout@4/dist/masonry.pkgd.min.js"></script>
+
+<!-- Modal para Editar Ficha Técnica -->
+<div class="modal fade" id="editMetadataModal" tabindex="-1" aria-labelledby="editMetadataModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark border-secondary border-opacity-25 rounded-4 shadow-lg text-white">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 py-3">
+        <h5 class="modal-title fw-bold" id="editMetadataModalLabel">
+          <i class="bi bi-pencil-square text-danger me-2"></i>Editar Ficha Técnica
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <form id="editMetadataForm" onsubmit="saveArtistMetadata(event)">
+        <div class="modal-body p-4 d-flex flex-column gap-3">
+          <div>
+            <label for="inputFormedIn" class="form-label text-secondary fw-semibold small">Formado en (Banda / Grupo)</label>
+            <input type="text" class="form-control bg-black bg-opacity-50 text-white border-secondary border-opacity-25" id="inputFormedIn" placeholder="Ej. Londres, Reino Unido" value="<%= artistMetadata['Formado en'] || '' %>">
+          </div>
+          <div>
+            <label for="inputBirthDate" class="form-label text-secondary fw-semibold small">Fecha de nacimiento (Solista)</label>
+            <input type="text" class="form-control bg-black bg-opacity-50 text-white border-secondary border-opacity-25" id="inputBirthDate" placeholder="Ej. 18 de junio de 1942" value="<%= artistMetadata['Fecha de nacimiento'] || '' %>">
+          </div>
+          <div>
+            <label for="inputBirthPlace" class="form-label text-secondary fw-semibold small">Lugar de nacimiento (Solista)</label>
+            <input type="text" class="form-control bg-black bg-opacity-50 text-white border-secondary border-opacity-25" id="inputBirthPlace" placeholder="Ej. Liverpool, Inglaterra" value="<%= artistMetadata['Lugar de nacimiento'] || '' %>">
+          </div>
+          <div>
+            <label for="inputActiveYears" class="form-label text-secondary fw-semibold small">Años de actividad</label>
+            <input type="text" class="form-control bg-black bg-opacity-50 text-white border-secondary border-opacity-25" id="inputActiveYears" placeholder="Ej. 1960 – presente" value="<%= artistMetadata['Años de actividad'] || '' %>">
+          </div>
+          <div>
+            <label for="inputDeceased" class="form-label text-secondary fw-semibold small">Fallecido (Opcional)</label>
+            <input type="text" class="form-control bg-black bg-opacity-50 text-white border-secondary border-opacity-25" id="inputDeceased" placeholder="Ej. 8 de diciembre de 1980" value="<%= artistMetadata['Fallecido'] || '' %>">
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-10 py-3">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger rounded-pill px-4" id="saveMetadataBtn">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <%- include('partials/footer') %>
