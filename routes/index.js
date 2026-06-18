@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { getFlagPath } = require('../services/flagHelper');
 
 router.get('/', (req, res) => {
   // 1. Estadísticas básicas
@@ -61,6 +62,7 @@ router.get('/', (req, res) => {
     avgAlbumRating,
     chartGenres,
     artists,
+    getFlagPath,
     title: 'Dashboard'
   });
 });

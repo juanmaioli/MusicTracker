@@ -5,6 +5,9 @@ const lastfm = require('../services/lastfm');
 const imageDownloader = require('../services/imageDownloader');
 const musicbrainz = require('../services/musicbrainz');
 const logger = require('../services/logger');
+const fs = require('fs');
+const path = require('path');
+const { getFlagPath } = require('../services/flagHelper');
 
 
 // Buscar artistas en Last.fm
@@ -42,7 +45,7 @@ router.get('/:id', (req, res) => {
     album.tracks = db.prepare('SELECT * FROM tracks WHERE album_id = ? ORDER BY track_number ASC').all(album.id);
   }
 
-  res.render('artist', { artist, albums, title: artist.name });
+  res.render('artist', { artist, albums, title: artist.name, getFlagPath });
 });
 
 // Agregar artista completo de Last.fm a SQLite

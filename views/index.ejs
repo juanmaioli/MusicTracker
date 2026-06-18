@@ -38,6 +38,22 @@
                     <i class="bi bi-person-fill fs-2"></i>
                   </div>
                 <% } %>
+                <% 
+                  let artistMeta = {};
+                  if (artist.metadata) {
+                    try {
+                      artistMeta = JSON.parse(artist.metadata);
+                    } catch(e) {}
+                  }
+                  const flagPath = getFlagPath(artistMeta['Lugar de nacimiento'] || artistMeta['Formado en']);
+                %>
+                <% if (flagPath) { %>
+                  <div class="position-absolute" style="bottom: 8px; right: 8px; z-index: 10;">
+                    <div class="d-flex align-items-center justify-content-center border border-danger border-1 rounded-circle shadow" style="width: 32px; height: 32px; background-color: rgba(0, 0, 0, 0.65);" title="<%= artistMeta['Lugar de nacimiento'] || artistMeta['Formado en'] %>">
+                      <img src="<%= flagPath %>" alt="Bandera" class="rounded-circle" style="width: 20px; height: 20px; object-fit: cover;" />
+                    </div>
+                  </div>
+                <% } %>
               </div>
               <div class="artist-name-text">
                 <%= artist.name %>

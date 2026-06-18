@@ -2,7 +2,8 @@ node_modules/
 .env
 musictracker.db
 GEMINI.md
-public/images/
+public/images/artists/
+public/images/albums/
 logs/
 
 

@@ -34,19 +34,42 @@ function formatBiography(text) {
   
   return paragraphs.join('\n');
 }
+
+// Parsear metadata del artista al inicio
+let artistMetadata = {};
+if (artist.metadata) {
+  try {
+    artistMetadata = JSON.parse(artist.metadata);
+  } catch(e) {
+    artistMetadata = {};
+  }
+}
+const hasMetadata = Object.keys(artistMetadata).length > 0;
 %>
 
 <div class="row g-4">
   <!-- Perfil Lateral -->
   <div class="col-lg-4">
     <div class="glass-card p-4 text-center sticky-lg-top" style="top: 100px; z-index: 1;">
-      <% if (artist.image) { %>
-        <img src="<%= artist.image %>" alt="<%= artist.name %>" class="img-fluid rounded-4 shadow-lg mb-4 object-fit-cover" style="max-height: 300px; width: 100%;">
-      <% } else { %>
-        <div class="rounded-4 bg-secondary d-flex align-items-center justify-content-center text-dark mb-4" style="height: 300px;">
-          <i class="bi bi-person-fill display-1"></i>
-        </div>
-      <% } %>
+      
+      <div class="position-relative mb-4">
+        <% if (artist.image) { %>
+          <img src="<%= artist.image %>" alt="<%= artist.name %>" class="img-fluid rounded-4 shadow-lg object-fit-cover w-100" style="max-height: 300px;">
+        <% } else { %>
+          <div class="rounded-4 bg-secondary d-flex align-items-center justify-content-center text-dark" style="height: 300px;">
+            <i class="bi bi-person-fill display-1"></i>
+          </div>
+        <% } %>
+        
+        <% const mainFlagPath = getFlagPath(artistMetadata['Lugar de nacimiento'] || artistMetadata['Formado en']); %>
+        <% if (mainFlagPath) { %>
+          <div class="position-absolute" style="bottom: 15px; right: 15px; z-index: 10;">
+            <div class="d-flex align-items-center justify-content-center border border-danger border-2 rounded-circle shadow-lg" style="width: 66px; height: 66px; background-color: rgba(0, 0, 0, 0.5);" title="<%= artistMetadata['Lugar de nacimiento'] || artistMetadata['Formado en'] %>">
+              <img src="<%= mainFlagPath %>" alt="Bandera" class="rounded-circle" style="width: 42px; height: 42px; object-fit: cover;" />
+            </div>
+          </div>
+        <% } %>
+      </div>
 
       <h1 class="h2 fw-extrabold mb-1 d-inline-flex align-items-center justify-content-center gap-2 flex-wrap">
         <%= artist.name %>
@@ -60,18 +83,6 @@ function formatBiography(text) {
           <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-10 rounded-pill text-capitalize px-3 py-1.5" style="font-size: 0.8rem; font-weight: 600;"><%= genre %></span>
         <% }) %>
       </div>
-
-      <% 
-        let artistMetadata = {};
-        if (artist.metadata) {
-          try {
-            artistMetadata = JSON.parse(artist.metadata);
-          } catch(e) {
-            artistMetadata = {};
-          }
-        }
-        const hasMetadata = Object.keys(artistMetadata).length > 0;
-      %>
 
       <% if (hasMetadata) { %>
         <div class="mb-3 mt-3 text-start bg-dark bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-10">

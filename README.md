@@ -114,7 +114,14 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.16.1 (Actual)
+### v1.17.0 (Actual)
+*   **🚩 Insignias de banderas de países:** Se implementó un sistema inteligente para mostrar la bandera del país de nacimiento o formación del artista.
+*   **🖼️ Superposición sobre la foto de perfil:** Las banderas se muestran superpuestas en la esquina inferior derecha de la foto principal del artista dentro de un círculo negro translúcido con borde rojo.
+*   **🏠 Integración en el Dashboard:** Las insignias de banderas circulares de tamaño adaptado se muestran en cada tarjeta de artista en la grilla del inicio (Dashboard).
+*   **🧩 Refactorización a Helper Compartido:** Se centralizó la lógica en [services/flagHelper.js](file:///home/juan/Documentos/Dev/Apps/MusicTracker/services/flagHelper.js) para normalizar ubicaciones, traducir/mapear variantes comunes (Reino Unido, Federación Rusa, etc.) y validar la existencia física del archivo.
+*   **🐛 Corrección de coincidencias cortas:** Se aplicaron límites de palabra (`\b`) en las coincidencias de abreviaciones cortas para evitar falsos positivos (como asignar la bandera estadounidense a t.A.T.u. por contener "us" en "rusa").
+
+### v1.16.1
 *   **🐛 Corrección en parsing de géneros (Last.fm):** Se corrigió el selector del extractor de tags/géneros en Last.fm para apuntar a `a[href*="/tag/"]`, solucionando el problema donde los géneros aparecían vacíos en la base de datos y la sección de estadísticas.
 *   **🎨 Diseño de insignias en rojo:** Se rediseñaron los badges de géneros musicales en la ficha de detalles del artista a un tono de acento rojo de alto contraste para mejorar la lectura y coherencia visual.
 
