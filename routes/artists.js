@@ -418,6 +418,66 @@ router.post('/:id/delete-image', (req, res) => {
   }
 });
 
+// Sincronizar/actualizar la galería de fotos del artista desde Last.fm
+router.post('/:id/sync-gallery', async (req, res) => {
+  const artistId = req.params.id;
+
+  try {
+    const artist = db.prepare('SELECT name, image, images FROM artists WHERE id = ?').get(artistId);
+    if (!artist) {
+      return res.status(404).json({ success: false, error: 'Artista no encontrado.' });
+    }
+
+    logger.info(`[Sincronizador Galería] Buscando nuevas fotos en Last.fm para "${artist.name}"...`);
+    const artistData = await lastfm.getArtistDetail(artistId);
+
+    if (!artistData.images || artistData.images.length === 0) {
+      return res.json({ success: true, message: 'No se encontraron fotos nuevas en Last.fm.', images: [] });
+    }
+
+    // 1. Borrar fotos locales de galería anteriores
+    let oldGallery = [];
+    if (artist.images) {
+      try {
+        oldGallery = JSON.parse(artist.images);
+      } catch (e) {
+        oldGallery = [];
+      }
+    }
+    logger.info(`[Sincronizador Galería] Eliminando ${oldGallery.length} fotos antiguas de galería de "${artist.name}"...`);
+    for (const img of oldGallery) {
+      imageDownloader.deleteImage(img);
+    }
+
+    // 2. Descargar las nuevas imágenes de galería
+    logger.info(`[Sincronizador Galería] Descargando ${artistData.images.length} fotos de galería desde Last.fm...`);
+    const localArtistImages = await imageDownloader.saveArtistGallery(artistData.images, artistId);
+
+    // 3. Si la imagen principal del artista estaba en la galería vieja y fue borrada
+    let updatedMainImage = artist.image;
+    if (!artist.image || oldGallery.includes(artist.image)) {
+      updatedMainImage = localArtistImages.length > 0 ? localArtistImages[0] : null;
+    }
+
+    // 4. Actualizar base de datos
+    db.prepare('UPDATE artists SET image = ?, images = ? WHERE id = ?').run(
+      updatedMainImage,
+      JSON.stringify(localArtistImages),
+      artistId
+    );
+
+    logger.info(`[Sincronizador Galería] Galería de "${artist.name}" actualizada con éxito. ${localArtistImages.length} fotos guardadas.`);
+    res.json({
+      success: true,
+      images: localArtistImages,
+      updatedMainImage
+    });
+  } catch (error) {
+    logger.error('Error al sincronizar la galería del artista:', error);
+    res.status(500).json({ success: false, error: 'Ocurrió un error al sincronizar la galería.' });
+  }
+});
+
 // Eliminar artista de SQLite (borrado en cascada)
 router.post('/:id/delete', (req, res) => {
   const artistId = req.params.id;
@@ -472,7 +532,15 @@ router.post('/batch-add', async (req, res) => {
   logger.info(`[Batch] Iniciando búsqueda e importación en lote para: "${name}"`);
 
   try {
-    // 1. Buscar en Last.fm
+    // 1. Revisar si el artista ya existe en la DB local por nombre exacto (case-insensitive)
+    const normalizedName = name.trim();
+    const localArtist = db.prepare('SELECT id, name FROM artists WHERE name = ? COLLATE NOCASE').get(normalizedName);
+    if (localArtist) {
+      logger.info(`[Batch] El artista "${localArtist.name}" (Slug: "${localArtist.id}") ya existe en la base de datos local (comprobación por nombre).`);
+      return res.json({ success: true, alreadyExists: true, name: localArtist.name, id: localArtist.id });
+    }
+
+    // 2. Buscar en Last.fm
     logger.info(`[Batch] Buscando en Last.fm el artista: "${name}"...`);
     const searchResults = await lastfm.searchArtists(name);
     if (!searchResults || searchResults.length === 0) {
@@ -484,14 +552,14 @@ router.post('/batch-add', async (req, res) => {
     const artistId = foundArtist.id;
     logger.info(`[Batch] Mejor coincidencia encontrada: "${foundArtist.name}" (Slug: "${artistId}")`);
 
-    // 2. Verificar si ya existe en SQLite
+    // 3. Verificar si ya existe en SQLite (por ID resuelto)
     const exists = db.prepare('SELECT id FROM artists WHERE id = ?').get(artistId);
     if (exists) {
       logger.info(`[Batch] El artista "${foundArtist.name}" (Slug: "${artistId}") ya existe en la base de datos local.`);
       return res.json({ success: true, alreadyExists: true, name: foundArtist.name, id: artistId });
     }
 
-    // 3. Importar artista completo (lógica idéntica a /add/:id)
+    // 4. Importar artista completo (lógica idéntica a /add/:id)
     logger.info(`[Batch] Importando metadatos detallados de "${foundArtist.name}"...`);
     const artistData = await lastfm.getArtistDetail(artistId);
     

@@ -114,7 +114,12 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.20.0 (Actual)
+### v1.21.0 (Actual)
+*   **🌎 Filtrado por países en Dashboard:** Se incorporó un selector dropdown (`select`) estético con efecto de vidrio esmerilado (`glassmorphism`) al lado de la barra de búsqueda. Lista dinámicamente los países de origen presentes en la colección del usuario con su respectiva bandera emoji y la cantidad de artistas registrados por país, ordenándose de mayor a menor cantidad de forma automática. Permite filtrar simultáneamente con la búsqueda de texto y actualiza el contador de artistas en tiempo real.
+*   **⚡ Optimización en Importación en Lote:** Se modificó la importación en lote (`POST /batch-add`) para verificar primero de forma local y asíncrona la existencia del artista en SQLite por su nombre (insensible a mayúsculas/minúsculas). Si ya existe, se omite el cooldown de espera de 15 segundos y la llamada redundante a Last.fm, agilizando drásticamente el proceso.
+*   **🔄 Actualización de Galería siempre visible:** El panel de fotos ahora se muestra de forma permanente en la vista del artista. Se agregó el botón "Actualizar Galería" para forzar de forma asíncrona (`fetch`) la sincronización de imágenes desde Last.fm y reconstruir la grilla de Masonry en caliente sin recargar la página.
+
+### v1.20.0
 *   **🗑️ Borrado de fotos asíncrono y silencioso:** Se implementó un botón "Borrar Foto" en el Lightbox de la galería al lado de "Abrir en pestaña nueva". Al hacer clic, elimina de forma directa la imagen física del disco local y los registros en SQLite usando peticiones asíncronas (`fetch`) sin pedir confirmación ("sin preguntar") y actualizando la interfaz y la grilla Masonry dinámicamente ("sin recargar"). Si la foto eliminada era la principal, se reasigna la siguiente disponible o se restablece el avatar predeterminado de forma fluida.
 
 ### v1.19.0

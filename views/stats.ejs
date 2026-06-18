@@ -442,6 +442,7 @@
           rowEl.innerHTML = '<span class="spinner-border spinner-border-sm text-info me-1" role="status"></span> Importando...';
           batchProgressText.textContent = `Procesando: ${i + 1} / ${artists.length}`;
 
+          let skipCooldown = false;
           try {
             const response = await fetch('/artists/batch-add', {
               method: 'POST',
@@ -455,6 +456,7 @@
             if (response.ok && result.success) {
               if (result.alreadyExists) {
                 rowEl.innerHTML = '<span class="text-secondary"><i class="bi bi-info-circle me-1"></i> Ya en colección</span>';
+                skipCooldown = true;
               } else {
                 rowEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Importado</span>';
               }
@@ -471,8 +473,8 @@
           batchProgressBar.style.width = `${percent}%`;
           batchProgressBar.setAttribute('aria-valuenow', percent);
 
-          // Si no es el último elemento, esperar 15 segundos
-          if (i < artists.length - 1) {
+          // Si no es el último elemento y no saltamos cooldown, esperar 15 segundos
+          if (i < artists.length - 1 && !skipCooldown) {
             batchCountdownContainer.style.display = 'block';
             let secondsLeft = 15;
             batchCountdown.textContent = secondsLeft;

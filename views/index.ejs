@@ -9,13 +9,25 @@
         <h2 class="h4 fw-bold m-0 d-flex align-items-center gap-2">
           <i class="bi bi-music-note-list text-danger"></i>
           <span>Tus Artistas</span>
+          <% if (artists.length > 0) { %>
+            <span id="artistsCountBadge" class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill fs-6 fw-normal"><%= artists.length %></span>
+          <% } %>
         </h2>
         <% if (artists.length > 0) { %>
-          <div class="position-relative" style="max-width: 300px; width: 100%;">
-            <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-secondary">
-              <i class="bi bi-funnel"></i>
-            </span>
-            <input type="text" id="filterInput" class="form-control form-control-sm rounded-pill bg-dark bg-opacity-50 text-white border-secondary border-opacity-25 ps-5" placeholder="Filtrar artistas..." autocomplete="off">
+          <div class="d-flex gap-2 flex-wrap" style="max-width: 500px; width: 100%;">
+            <!-- Selector de Países -->
+            <div class="position-relative flex-grow-1" style="max-width: 200px;">
+              <select id="countryFilter" class="form-select form-select-sm rounded-pill text-white px-3" style="cursor: pointer; font-size: 0.85rem; height: 31px; background-color: var(--glass-bg); border-color: var(--glass-border); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);">
+                <option value="" style="background-color: #212529; color: #fff;">Todos los países</option>
+              </select>
+            </div>
+            <!-- Campo de Búsqueda -->
+            <div class="position-relative flex-grow-1" style="max-width: 250px;">
+              <span class="position-absolute top-50 start-0 translate-middle-y ps-3 text-secondary">
+                <i class="bi bi-funnel"></i>
+              </span>
+              <input type="text" id="filterInput" class="form-control form-control-sm rounded-pill text-white ps-5" style="background-color: var(--glass-bg); border-color: var(--glass-border); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);" placeholder="Filtrar artistas..." autocomplete="off">
+            </div>
           </div>
         <% } %>
       </div>
@@ -29,7 +41,21 @@
       <% } else { %>
         <div class="artist-grid">
           <% artists.forEach(artist => { %>
-            <a href="/artists/<%= artist.id %>" class="text-decoration-none artist-grid-item" title="<%= artist.name %>">
+            <% 
+              let artistMeta = {};
+              if (artist.metadata) {
+                try {
+                  artistMeta = JSON.parse(artist.metadata);
+                } catch(e) {}
+              }
+              const locationStr = artistMeta['Lugar de nacimiento'] || artistMeta['Formado en'];
+              const flagPath = getFlagPath(locationStr);
+              let countryCode = '';
+              if (flagPath) {
+                countryCode = flagPath.split('/').pop().replace('.png', '');
+              }
+            %>
+            <a href="/artists/<%= artist.id %>" class="text-decoration-none artist-grid-item" title="<%= artist.name %>" data-country="<%= countryCode %>">
               <div class="artist-card-square mb-2">
                 <% if (artist.image) { %>
                   <img src="<%= artist.image %>" alt="<%= artist.name %>" class="artist-img-square">
@@ -38,15 +64,6 @@
                     <i class="bi bi-person-fill fs-2"></i>
                   </div>
                 <% } %>
-                <% 
-                  let artistMeta = {};
-                  if (artist.metadata) {
-                    try {
-                      artistMeta = JSON.parse(artist.metadata);
-                    } catch(e) {}
-                  }
-                  const flagPath = getFlagPath(artistMeta['Lugar de nacimiento'] || artistMeta['Formado en']);
-                %>
                 <% if (flagPath) { %>
                   <div class="position-absolute" style="bottom: 8px; right: 8px; z-index: 10;">
                     <div class="d-flex align-items-center justify-content-center border border-danger border-1 rounded-circle shadow" style="width: 32px; height: 32px; background-color: rgba(0, 0, 0, 0.65);" title="<%= artistMeta['Lugar de nacimiento'] || artistMeta['Formado en'] %>">
@@ -149,8 +166,36 @@
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const filterInput = document.getElementById('filterInput');
+    const countryFilter = document.getElementById('countryFilter');
     const artistItems = document.querySelectorAll('.artist-grid-item');
     
+    const countryNames = {
+      'estadosunidos': 'Estados Unidos',
+      'reinounido': 'Reino Unido',
+      'alemania': 'Alemania',
+      'espana': 'España',
+      'francia': 'Francia',
+      'suecia': 'Suecia',
+      'noruega': 'Noruega',
+      'finlandia': 'Finlandia',
+      'dinamarca': 'Dinamarca',
+      'belgica': 'Bélgica',
+      'paisesbajos': 'Países Bajos',
+      'brasil': 'Brasil',
+      'japon': 'Japón',
+      'canada': 'Canadá',
+      'australia': 'Australia',
+      'nuevazelandia': 'Nueva Zelanda',
+      'italia': 'Italia',
+      'china': 'China',
+      'bosniaherzegovina': 'Bosnia y Herzegovina',
+      'argentina': 'Argentina',
+      'uruguay': 'Uruguay',
+      'chile': 'Chile',
+      'mexico': 'México',
+      'colombia': 'Colombia'
+    };
+
     // Crear el mensaje de "no hay resultados"
     const noResultsMsg = document.createElement('div');
     noResultsMsg.id = 'noResultsMsg';
@@ -165,29 +210,106 @@
       grid.parentNode.appendChild(noResultsMsg);
     }
 
-    if (filterInput) {
-      filterInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase().trim();
-        let visibleCount = 0;
+    const countryFlags = {
+      'estadosunidos': '🇺🇸',
+      'reinounido': '🇬🇧',
+      'alemania': '🇩🇪',
+      'espana': '🇪🇸',
+      'francia': '🇫🇷',
+      'suecia': '🇸🇪',
+      'noruega': '🇳🇴',
+      'finlandia': '🇫🇮',
+      'dinamarca': '🇩🇰',
+      'belgica': '🇧🇪',
+      'paisesbajos': '🇳🇱',
+      'brasil': '🇧🇷',
+      'japon': '🇯🇵',
+      'canada': '🇨🇦',
+      'australia': '🇦🇺',
+      'nuevazelandia': '🇳🇿',
+      'italia': '🇮🇹',
+      'china': '🇨🇳',
+      'bosniaherzegovina': '🇧🇦',
+      'argentina': '🇦🇷',
+      'uruguay': '🇺🇾',
+      'chile': '🇨🇱',
+      'mexico': '🇲🇽',
+      'colombia': '🇨🇴'
+    };
 
-        artistItems.forEach(item => {
-          const name = item.querySelector('.artist-name-text').textContent.toLowerCase();
-          if (name.includes(query)) {
-            item.classList.remove('d-none');
-            visibleCount++;
-          } else {
-            item.classList.add('d-none');
-          }
-        });
-
-        if (visibleCount === 0) {
-          if (grid) grid.classList.add('d-none');
-          noResultsMsg.classList.remove('d-none');
-        } else {
-          if (grid) grid.classList.remove('d-none');
-          noResultsMsg.classList.add('d-none');
+    // Inicializar dinámicamente las opciones del selector de países
+    if (countryFilter) {
+      const uniqueCountries = {};
+      artistItems.forEach(item => {
+        const country = item.getAttribute('data-country');
+        if (country) {
+          uniqueCountries[country] = (uniqueCountries[country] || 0) + 1;
         }
       });
+
+      const sortedCountries = Object.keys(uniqueCountries).sort((a, b) => {
+        const countA = uniqueCountries[a];
+        const countB = uniqueCountries[b];
+        if (countB !== countA) {
+          return countB - countA; // Mayor cantidad primero
+        }
+        const nameA = countryNames[a] || a.toUpperCase();
+        const nameB = countryNames[b] || b.toUpperCase();
+        return nameA.localeCompare(nameB); // Empate alfabético
+      });
+
+      sortedCountries.forEach(code => {
+        const option = document.createElement('option');
+        option.value = code;
+        option.style.backgroundColor = '#212529';
+        option.style.color = '#ffffff';
+        const flag = countryFlags[code] || '🏳️';
+        const name = countryNames[code] || code.charAt(0).toUpperCase() + code.slice(1);
+        const count = uniqueCountries[code];
+        option.textContent = `${flag} ${name} (${count})`;
+        countryFilter.appendChild(option);
+      });
+    }
+
+    function filterArtists() {
+      const query = filterInput ? filterInput.value.toLowerCase().trim() : '';
+      const selectedCountry = countryFilter ? countryFilter.value : '';
+      let visibleCount = 0;
+
+      artistItems.forEach(item => {
+        const name = item.querySelector('.artist-name-text').textContent.toLowerCase();
+        const country = item.getAttribute('data-country');
+
+        const matchesQuery = name.includes(query);
+        const matchesCountry = !selectedCountry || country === selectedCountry;
+
+        if (matchesQuery && matchesCountry) {
+          item.classList.remove('d-none');
+          visibleCount++;
+        } else {
+          item.classList.add('d-none');
+        }
+      });
+
+      if (visibleCount === 0) {
+        if (grid) grid.classList.add('d-none');
+        noResultsMsg.classList.remove('d-none');
+      } else {
+        if (grid) grid.classList.remove('d-none');
+        noResultsMsg.classList.add('d-none');
+      }
+
+      const badge = document.getElementById('artistsCountBadge');
+      if (badge) {
+        badge.textContent = visibleCount;
+      }
+    }
+
+    if (filterInput) {
+      filterInput.addEventListener('input', filterArtists);
+    }
+    if (countryFilter) {
+      countryFilter.addEventListener('change', filterArtists);
     }
   });
 </script>
