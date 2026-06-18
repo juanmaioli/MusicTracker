@@ -367,6 +367,57 @@ router.post('/:id/metadata', (req, res) => {
   }
 });
 
+// Borrar una foto de la galería del artista
+router.post('/:id/delete-image', (req, res) => {
+  const artistId = req.params.id;
+  const { imageUrl } = req.body;
+
+  if (!imageUrl) {
+    return res.status(400).json({ success: false, error: 'Falta la URL de la imagen.' });
+  }
+
+  try {
+    const artist = db.prepare('SELECT image, images FROM artists WHERE id = ?').get(artistId);
+    if (!artist) {
+      return res.status(404).json({ success: false, error: 'Artista no encontrado.' });
+    }
+
+    let gallery = [];
+    if (artist.images) {
+      try {
+        gallery = JSON.parse(artist.images);
+      } catch (e) {
+        gallery = [];
+      }
+    }
+
+    const initialLength = gallery.length;
+    gallery = gallery.filter(img => img !== imageUrl);
+
+    if (gallery.length === initialLength && artist.image !== imageUrl) {
+      return res.status(400).json({ success: false, error: 'La imagen no pertenece a la galería del artista.' });
+    }
+
+    imageDownloader.deleteImage(imageUrl);
+
+    let updatedMainImage = artist.image;
+    if (artist.image === imageUrl) {
+      updatedMainImage = gallery.length > 0 ? gallery[0] : null;
+    }
+
+    db.prepare('UPDATE artists SET image = ?, images = ? WHERE id = ?').run(
+      updatedMainImage,
+      JSON.stringify(gallery),
+      artistId
+    );
+
+    res.json({ success: true, imageUrl, updatedMainImage });
+  } catch (error) {
+    console.error('Error al borrar la foto del artista:', error);
+    res.status(500).json({ success: false, error: 'Ocurrió un error al borrar la foto.' });
+  }
+});
+
 // Eliminar artista de SQLite (borrado en cascada)
 router.post('/:id/delete', (req, res) => {
   const artistId = req.params.id;

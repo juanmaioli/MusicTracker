@@ -114,7 +114,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
  
-### v1.19.0 (Actual)
+### v1.20.0 (Actual)
+*   **🗑️ Borrado de fotos asíncrono y silencioso:** Se implementó un botón "Borrar Foto" en el Lightbox de la galería al lado de "Abrir en pestaña nueva". Al hacer clic, elimina de forma directa la imagen física del disco local y los registros en SQLite usando peticiones asíncronas (`fetch`) sin pedir confirmación ("sin preguntar") y actualizando la interfaz y la grilla Masonry dinámicamente ("sin recargar"). Si la foto eliminada era la principal, se reasigna la siguiente disponible o se restablece el avatar predeterminado de forma fluida.
+
+### v1.19.0
 *   **📝 Ficha Técnica Editable:** Se implementó la edición manual para los campos de la ficha técnica del artista (Formado en, Fecha de nacimiento, Lugar de nacimiento, Años de actividad, Fallecido). Los cambios se guardan de forma asíncrona (`fetch`) y actualizan el bloque lateral sin perder otros metadatos (como miembros de bandas), forzando el recargo para actualizar la bandera asociada.
 
 ### v1.18.1

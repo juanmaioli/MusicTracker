@@ -176,13 +176,13 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
         <h2 class="h4 fw-bold mb-4 d-flex align-items-center gap-2">
           <i class="bi bi-images text-danger"></i>
           <span>Fotos</span>
-          <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill fs-6 fw-normal"><%= artist.imagesList.length %></span>
+          <span id="photoCountBadge" class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill fs-6 fw-normal"><%= artist.imagesList.length %></span>
         </h2>
         
         <div class="masonry-grid" id="masonryGrid">
           <div class="masonry-grid-sizer"></div>
           <% artist.imagesList.forEach((img, idx) => { %>
-            <div class="masonry-grid-item" onclick="openPhotoLightbox(<%= idx %>)">
+            <div class="masonry-grid-item" data-img-url="<%= img %>" onclick="openPhotoLightbox('<%= img %>')">
               <div class="masonry-card rounded-3 overflow-hidden position-relative shadow-sm">
                 <img src="<%= img %>" alt="Foto <%= idx + 1 %> de <%= artist.name %>" class="w-100 h-auto d-block">
                 <div class="masonry-overlay d-flex flex-column justify-content-between p-3 position-absolute top-0 start-0 w-100 h-100">
@@ -507,8 +507,13 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
   <% } %>
   let photoLightboxModalInstance = null;
 
-  function openPhotoLightbox(index) {
-    currentPhotoIndex = index;
+  function openPhotoLightbox(indexOrUrl) {
+    if (typeof indexOrUrl === 'string') {
+      currentPhotoIndex = artistImages.indexOf(indexOrUrl);
+    } else {
+      currentPhotoIndex = indexOrUrl;
+    }
+    if (currentPhotoIndex === -1) return;
     const imgUrl = artistImages[currentPhotoIndex];
     
     const lightboxImg = document.getElementById('lightboxImg');
@@ -614,6 +619,91 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
     }
   }
 
+  async function deleteArtistImage() {
+    const lightboxImg = document.getElementById('lightboxImg');
+    const deleteBtn = document.getElementById('deleteImageBtn');
+    const deleteBtnText = document.getElementById('deleteImageBtnText');
+    if (!lightboxImg || !deleteBtn || !deleteBtnText) return;
+
+    const imageUrl = lightboxImg.getAttribute('src');
+    if (!imageUrl) return;
+
+    deleteBtn.disabled = true;
+    const originalText = deleteBtnText.textContent;
+    deleteBtnText.textContent = 'Borrando...';
+
+    try {
+      const response = await fetch(`/artists/<%= artist.id %>/delete-image`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ imageUrl })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        // 1. Ocultar el modal Lightbox de inmediato
+        if (photoLightboxModalInstance) {
+          photoLightboxModalInstance.hide();
+        }
+
+        // 2. Remover dinámicamente el elemento de la grilla Masonry
+        const gridItem = document.querySelector(`[data-img-url="${imageUrl}"]`);
+        if (gridItem) {
+          gridItem.style.opacity = '0';
+          gridItem.style.transform = 'scale(0.8)';
+          setTimeout(() => {
+            if (window.msnryInstance) {
+              window.msnryInstance.remove(gridItem);
+              window.msnryInstance.layout();
+            } else {
+              gridItem.remove();
+            }
+          }, 250);
+        }
+
+        // 3. Filtrar el array de imágenes local del visor
+        artistImages = artistImages.filter(img => img !== imageUrl);
+
+        // 4. Actualizar el contador del badge de fotos
+        const badge = document.getElementById('photoCountBadge');
+        if (badge) {
+          const currentCount = parseInt(badge.textContent, 10);
+          if (!isNaN(currentCount) && currentCount > 0) {
+            badge.textContent = currentCount - 1;
+          }
+        }
+
+        // 5. Si la imagen borrada era la principal, actualizar el sidebar lateral
+        const mainImg = document.getElementById('mainArtistImg');
+        if (mainImg && mainImg.getAttribute('src') === imageUrl) {
+          if (result.updatedMainImage) {
+            mainImg.src = result.updatedMainImage;
+          } else {
+            const imgWrapper = document.getElementById('mainArtistImgWrapper');
+            if (imgWrapper) {
+              imgWrapper.innerHTML = `
+                <div id="mainArtistImgPlaceholder" class="rounded-4 bg-secondary d-flex align-items-center justify-content-center text-dark" style="height: 300px;">
+                  <i class="bi bi-person-fill display-1"></i>
+                </div>
+              `;
+            }
+          }
+        }
+      } else {
+        alert('Error al borrar la imagen: ' + (result.error || 'Ocurrió un error inesperado.'));
+      }
+    } catch (err) {
+      console.error('Error al borrar la foto:', err);
+      alert('Error de red al intentar borrar la foto.');
+    } finally {
+      deleteBtnText.textContent = originalText;
+      deleteBtn.disabled = false;
+    }
+  }
+
   // Teclado para navegación de fotos y de grid anterior
   document.addEventListener('keydown', (e) => {
     const photoModalEl = document.getElementById('photoLightboxModal');
@@ -635,7 +725,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
     const grid = document.querySelector('#masonryGrid');
     if (grid) {
       imagesLoaded(grid, () => {
-        const msnry = new Masonry(grid, {
+        window.msnryInstance = new Masonry(grid, {
           itemSelector: '.masonry-grid-item',
           columnWidth: '.masonry-grid-sizer',
           percentPosition: true,
@@ -968,6 +1058,11 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
             <i class="bi bi-box-arrow-up-right"></i>
             <span>Abrir en pestaña nueva</span>
           </a>
+          <span class="text-white-50">|</span>
+          <button id="deleteImageBtn" onclick="deleteArtistImage()" class="lightbox-action-btn text-decoration-none d-inline-flex align-items-center gap-1 small text-danger" title="Borrar foto del disco y la DB" style="color: #dc3545 !important;">
+            <i class="bi bi-trash"></i>
+            <span id="deleteImageBtnText">Borrar Foto</span>
+          </button>
           <span class="text-white-50">|</span>
           <button id="setMainImageBtn" onclick="setAsMainArtistImage()" class="lightbox-action-btn text-decoration-none d-inline-flex align-items-center gap-1 small" title="Establecer como foto principal">
             <i class="bi bi-image"></i>
