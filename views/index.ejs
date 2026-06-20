@@ -39,6 +39,7 @@
           <a href="/artists/search" class="btn btn-spotify"><i class="bi bi-search me-2"></i>Buscar en Last.fm</a>
         </div>
       <% } else { %>
+        <% let lastInitial = ''; %>
         <div class="artist-grid">
           <% artists.forEach(artist => { %>
             <% 
@@ -54,7 +55,24 @@
               if (flagPath) {
                 countryCode = flagPath.split('/').pop().replace('.png', '');
               }
+
+              // Determinar la letra inicial del artista
+              const currentInitial = artist.name.trim().charAt(0).toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/ñ/g, 'N');
+              const isNewInitial = currentInitial !== lastInitial;
+              if (isNewInitial) {
+                lastInitial = currentInitial;
+              }
             %>
+            <% if (isNewInitial) { %>
+              <div class="letter-card-item d-flex flex-column align-items-center" data-letter="<%= currentInitial %>" style="width: 100%; user-select: none;">
+                <div class="artist-card-square mb-2 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(33, 37, 41, 0.9) 100%); border: 1.5px solid var(--brand-color); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.45);">
+                  <span class="fw-extrabold text-white" style="font-size: 5.5rem; text-shadow: 0 0 20px rgba(255, 255, 255, 0.25);"><%= currentInitial %></span>
+                </div>
+                <div class="artist-name-text text-secondary fw-bold" style="letter-spacing: 2px; font-size: 0.75rem; text-transform: uppercase;">
+                  Inicial
+                </div>
+              </div>
+            <% } %>
             <a href="/artists/<%= encodeURIComponent(artist.id) %>" class="text-decoration-none artist-grid-item" title="<%= artist.name %>" data-country="<%= countryCode %>">
               <div class="artist-card-square mb-2">
                 <% if (artist.image) { %>
@@ -428,6 +446,25 @@
         badge.textContent = visibleCount;
       }
 
+      // Filtrar visibilidad de las tarjetas de letras iniciales
+      const visibleInitials = new Set();
+      artistItems.forEach(item => {
+        if (!item.classList.contains('d-none')) {
+          const name = item.querySelector('.artist-name-text').textContent;
+          const initial = getCleanInitial(name);
+          if (initial) visibleInitials.add(initial);
+        }
+      });
+
+      document.querySelectorAll('.letter-card-item').forEach(card => {
+        const letter = card.getAttribute('data-letter');
+        if (visibleInitials.has(letter)) {
+          card.classList.remove('d-none');
+        } else {
+          card.classList.add('d-none');
+        }
+      });
+
       // Actualizar qué letras del abecedario están disponibles
       updateAlphabetState();
     }
@@ -471,7 +508,8 @@
       indicator.addEventListener('click', (e) => {
         e.preventDefault();
         const letter = indicator.getAttribute('data-letter');
-        const targetItem = Array.from(artistItems).find(item => {
+        const letterCard = document.querySelector(`.letter-card-item[data-letter="${letter}"]:not(.d-none)`);
+        const targetItem = letterCard || Array.from(artistItems).find(item => {
           if (item.classList.contains('d-none')) return false;
           const name = item.querySelector('.artist-name-text').textContent;
           return getCleanInitial(name) === letter;
@@ -481,12 +519,13 @@
           targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
           
           // Efecto de parpadeo temporal de realce para indicar visualmente dónde saltó
-          targetItem.style.transition = 'outline 0.3s ease';
-          targetItem.style.outline = '2px solid var(--brand-color)';
-          targetItem.style.borderRadius = '12px';
+          const highlightEl = targetItem.querySelector('.artist-card-square') || targetItem;
+          highlightEl.style.transition = 'outline 0.3s ease, border-color 0.3s ease';
+          highlightEl.style.outline = '3px solid var(--brand-color)';
+          highlightEl.style.borderRadius = '12px';
           
           setTimeout(() => {
-            targetItem.style.outline = '2px solid transparent';
+            highlightEl.style.outline = '3px solid transparent';
           }, 1500);
         }
       });

@@ -114,7 +114,11 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.23.0 (Actual)
+### v1.24.0 (Actual)
+*   **🔤 Tarjetas de iniciales en Dashboard:** Se inyectaron tarjetas cuadradas con diseño de vidrio esmerilado, borde rojo de marca y letras a gran escala (`5.5rem`) como separadores visuales alfabéticos dentro de la grilla de artistas del inicio.
+*   **⚡ Scroll y Filtrado inteligente de iniciales:** Se sincronizó el abecedario flotante para que apunte y resalte con un borde parpadeante rojo a la tarjeta de la inicial al hacer clic. Además, el script asíncrono de filtrado oculta automáticamente los separadores vacíos cuando no hay artistas correspondientes en pantalla.
+
+### v1.23.0
 *   **🔗 Enlaces y reproducción rápida de Artista:** Se incorporaron botones estilizados de tamaño `32px` con los logos vectoriales locales (`lastfm.svg`, `spotify.svg` y `youtube.svg`) al lado del nombre del artista en su ficha de detalles, permitiendo visitar su perfil de Last.fm o buscar al artista en Spotify y YouTube.
 *   **🎵 Iconos SVG de reproducción en Álbumes:** Se rediseñó el acceso a reproductores en la grilla de álbumes reemplazando los iconos genéricos por los SVG locales de Spotify y YouTube, escalados a `32px` para mayor visibilidad, e integrando efectos hover premium simétricos de escala y rotación.
 
