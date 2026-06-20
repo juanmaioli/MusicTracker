@@ -114,7 +114,13 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.24.0 (Actual)
+### v1.25.0 (Actual)
+*   **🖼️ Borrado continuo en Lightbox:** Se modificó el comportamiento de eliminación de imágenes en el visor Lightbox; ahora no se cierra el modal, sino que avanza y renderiza de forma automática la siguiente foto disponible de la galería, ocultándose únicamente si la galería se queda completamente vacía.
+*   **🐛 Comprobación de duplicados por TXT sin acentos:** Se corrigieron las rutas `/artists/batch-check` y `/artists/batch-add` para comparar los nombres de los artistas en lote utilizando la normalización `removeAccents()`. Esto soluciona los problemas donde artistas con diferencias únicamente en marcas diacríticas (como "Andres Calamaro" y "Andrés Calamaro") no eran catalogados como duplicados.
+*   **🚩 Banderas de Egipto y Filipinas:** Se añadió soporte en `services/flagHelper.js` y en el Dashboard para traducir, mapear y visualizar las banderas de Egipto (`🇪🇬`) y Filipinas (`🇵🇭`) en las tarjetas y en el selector de filtros de países.
+*   **📂 Reubicación de filtro "Sin Datos":** Se reordenó el dropdown de países de la pantalla de inicio para posicionar la opción "Sin datos" en segundo lugar (inmediatamente después de "Todos los países"), agilizando la depuración de artistas sin ubicación registrada.
+
+### v1.24.0
 *   **🔤 Tarjetas de iniciales en Dashboard:** Se inyectaron tarjetas cuadradas con diseño de vidrio esmerilado, borde rojo de marca y letras a gran escala (`5.5rem`) como separadores visuales alfabéticos dentro de la grilla de artistas del inicio.
 *   **⚡ Scroll y Filtrado inteligente de iniciales:** Se sincronizó el abecedario flotante para que apunte y resalte con un borde parpadeante rojo a la tarjeta de la inicial al hacer clic. Además, el script asíncrono de filtrado oculta automáticamente los separadores vacíos cuando no hay artistas correspondientes en pantalla.
 

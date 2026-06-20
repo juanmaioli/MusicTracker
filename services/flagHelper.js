@@ -55,7 +55,11 @@ function getFlagPath(locationStr) {
     'bosnia y herzegovina': 'bosniaherzegovina',
     'bosnia and herzegovina': 'bosniaherzegovina',
     'switzerland': 'suiza',
-    'puerto rico': 'puertorico'
+    'puerto rico': 'puertorico',
+    'egypt': 'egipto',
+    'egipto': 'egipto',
+    'philippines': 'filipinas',
+    'filipinas': 'filipinas'
   };
 
   for (const [key, val] of Object.entries(termMap)) {

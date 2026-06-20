@@ -283,7 +283,9 @@
       'nigeria': 'Nigeria',
       'serbia': 'Serbia',
       'tanzania': 'Tanzania',
-      'irlanda': 'Irlanda'
+      'irlanda': 'Irlanda',
+      'egipto': 'Egipto',
+      'filipinas': 'Filipinas'
     };
 
     // Crear el mensaje de "no hay resultados"
@@ -346,7 +348,9 @@
       'nigeria': '🇳🇬',
       'serbia': '🇷🇸',
       'tanzania': '🇹🇿',
-      'irlanda': '🇮🇪'
+      'irlanda': '🇮🇪',
+      'egipto': '🇪🇬',
+      'filipinas': '🇵🇭'
     };
 
     // Inicializar dinámicamente las opciones del selector de países
@@ -373,6 +377,15 @@
         return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' }); // Empate alfabético
       });
 
+      if (noCountryCount > 0) {
+        const option = document.createElement('option');
+        option.value = 'no_country';
+        option.style.backgroundColor = '#212529';
+        option.style.color = '#ffffff';
+        option.textContent = `🏳️ Sin datos (${noCountryCount})`;
+        countryFilter.appendChild(option);
+      }
+
       sortedCountries.forEach(code => {
         const option = document.createElement('option');
         option.value = code;
@@ -384,15 +397,6 @@
         option.textContent = `${flag} ${name} (${count})`;
         countryFilter.appendChild(option);
       });
-
-      if (noCountryCount > 0) {
-        const option = document.createElement('option');
-        option.value = 'no_country';
-        option.style.backgroundColor = '#212529';
-        option.style.color = '#ffffff';
-        option.textContent = `🏳️ Sin datos (${noCountryCount})`;
-        countryFilter.appendChild(option);
-      }
     }
 
     function cleanText(str) {

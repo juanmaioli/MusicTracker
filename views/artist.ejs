@@ -689,12 +689,10 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
 
       const result = await response.json();
       if (result.success) {
-        // 1. Ocultar el modal Lightbox de inmediato
-        if (photoLightboxModalInstance) {
-          photoLightboxModalInstance.hide();
-        }
+        const deletedIndex = artistImages.indexOf(imageUrl);
+        artistImages = artistImages.filter(img => img !== imageUrl);
 
-        // 2. Remover dinámicamente el elemento de la grilla Masonry
+        // 1. Remover dinámicamente el elemento de la grilla Masonry
         const gridItem = document.querySelector(`[data-img-url="${imageUrl}"]`);
         if (gridItem) {
           gridItem.style.opacity = '0';
@@ -709,10 +707,23 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
           }, 250);
         }
 
-        // 3. Filtrar el array de imágenes local del visor
-        artistImages = artistImages.filter(img => img !== imageUrl);
+        // 2. Pasar a la siguiente foto o cerrar si no quedan más
+        if (artistImages.length > 0) {
+          currentPhotoIndex = Math.min(deletedIndex, artistImages.length - 1);
+          const nextImgUrl = artistImages[currentPhotoIndex];
+          const indexLabel = document.getElementById('lightboxIndexLabel');
+          const externalLink = document.getElementById('lightboxExternalLink');
 
-        // 4. Actualizar el contador del badge de fotos
+          if (lightboxImg) lightboxImg.src = nextImgUrl;
+          if (indexLabel) indexLabel.textContent = `Foto ${currentPhotoIndex + 1} de ${artistImages.length}`;
+          if (externalLink) externalLink.href = nextImgUrl;
+        } else {
+          if (photoLightboxModalInstance) {
+            photoLightboxModalInstance.hide();
+          }
+        }
+
+        // 3. Actualizar el contador del badge de fotos
         const badge = document.getElementById('photoCountBadge');
         if (badge) {
           const currentCount = parseInt(badge.textContent, 10);

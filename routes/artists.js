@@ -10,6 +10,14 @@ const path = require('path');
 const { getFlagPath } = require('../services/flagHelper');
 
 
+function removeAccents(str) {
+  if (!str) return '';
+  return str.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ñ/g, 'n');
+}
+
 // Buscar artistas en Last.fm
 router.get('/search', async (req, res) => {
   const query = req.query.q || '';
@@ -567,12 +575,13 @@ router.post('/batch-check', (req, res) => {
   try {
     const existing = [];
     const missing = [];
-    const checkStmt = db.prepare('SELECT name FROM artists WHERE name = ? COLLATE NOCASE');
+    const localArtists = db.prepare('SELECT name FROM artists').all();
 
     for (const name of names) {
       const trimmedName = name.trim();
       if (!trimmedName) continue;
-      const row = checkStmt.get(trimmedName);
+      const searchClean = removeAccents(trimmedName);
+      const row = localArtists.find(a => removeAccents(a.name) === searchClean);
       if (row) {
         existing.push(trimmedName);
       } else {
@@ -598,11 +607,12 @@ router.post('/batch-add', async (req, res) => {
   logger.info(`[Batch] Iniciando búsqueda e importación en lote para: "${name}"`);
 
   try {
-    // 1. Revisar si el artista ya existe en la DB local por nombre exacto (case-insensitive)
-    const normalizedName = name.trim();
-    const localArtist = db.prepare('SELECT id, name FROM artists WHERE name = ? COLLATE NOCASE').get(normalizedName);
+    // 1. Revisar si el artista ya existe en la DB local por nombre (insensible a acentos y mayúsculas)
+    const searchClean = removeAccents(name);
+    const localArtists = db.prepare('SELECT id, name FROM artists').all();
+    const localArtist = localArtists.find(a => removeAccents(a.name) === searchClean);
     if (localArtist) {
-      logger.info(`[Batch] El artista "${localArtist.name}" (Slug: "${localArtist.id}") ya existe en la base de datos local (comprobación por nombre).`);
+      logger.info(`[Batch] El artista "${localArtist.name}" (Slug: "${localArtist.id}") ya existe en la base de datos local (comprobación por nombre normalizado).`);
       return res.json({ success: true, alreadyExists: true, name: localArtist.name, id: localArtist.id });
     }
 
