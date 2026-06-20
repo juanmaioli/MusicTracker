@@ -113,9 +113,12 @@ erDiagram
 ---
 
 ## 🚀 Historial de Versiones
- 
-### v1.22.0 (Actual)
-*   **🔤 Abecedario flotante en Dashboard:** Se incorporó un abecedario flotante vertical en el margen derecho de la pantalla principal, posicionado fuera del contenedor de tarjetas de artistas, con botones estilizados de tamaño optimizado (`26px`) para facilitar el desplazamiento rápido y mejorar la navegación de usuarios con visión reducida.
+
+### v1.22.1 (Actual)
+*   **🎨 Efecto Hover en Abecedario:** Se redujo el tamaño de fuente y del botón del abecedario flotante por defecto. Al pasar el cursor por encima, la letra se magnifica tres veces (`scale(3)`) con una animación fluida sobre un círculo de fondo rojo translúcido al 75% de opacidad para mejorar el realce visual.
+
+### v1.22.0
+*   **🔤 Abecedario flotante en Dashboard:** Se incorporó un abecedario flotante vertical en el margen derecho de la pantalla principal, posicionado fuera del contenedor de tarjetas de artistas, con botones estilizados de tamaño optimizado para facilitar el desplazamiento rápido y mejorar la navegación de usuarios con visión reducida.
 *   **📂 Opción "Sin Datos" en filtro de países:** Se agregó la opción "Sin datos" al selector dropdown del Dashboard para filtrar y listar rápidamente aquellos artistas que no tienen un país de origen cargado.
 *   **📊 Sección "Sin Fotos" y Descarga en lote:** En la página de estadísticas se añadió una tarjeta indicadora con la cantidad de artistas sin imágenes en su galería que abre un modal con el listado detallado de los mismos. Además, se implementó un botón para iniciar la descarga y sincronización de álbumes en lote con un modal que reporta el progreso en tiempo real.
 *   **🐛 Robustez con caracteres especiales (`&` y acentos):** Se solucionaron las discrepancias de ruteo y codificación en nombres de artistas que contienen el carácter ampersand `&` o letras acentuadas (como "Guns N' Roses" o artistas con tildes), implementando una búsqueda adaptativa en el backend que prueba múltiples variaciones del identificador.

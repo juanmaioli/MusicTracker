@@ -85,14 +85,14 @@
 
 <% if (artists.length > 0) { %>
   <!-- Abecedario flotante en pantallas medianas y grandes -->
-  <div class="alphabet-sidebar d-none d-md-flex flex-column align-items-center gap-0.5 py-2 px-2 rounded-pill shadow-lg" style="position: fixed; right: 16px; top: 52%; transform: translateY(-50%); z-index: 1050; background-color: rgba(33, 37, 41, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); max-height: 85vh; overflow-y: auto;">
+  <div class="alphabet-sidebar d-none d-md-flex flex-column align-items-center gap-1 py-3 px-2 rounded-pill shadow-lg" style="position: fixed; right: 16px; top: 52%; transform: translateY(-50%); z-index: 1050; background-color: rgba(33, 37, 41, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); max-height: 85vh; overflow: visible;">
     <% 
       const alphabetStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       alphabetStr.split("").forEach(letter => { 
     %>
       <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center justify-content-center alphabet-indicator fw-bold text-center" 
               data-letter="<%= letter %>" 
-              style="width: 26px; height: 26px; font-size: 0.95rem; border-radius: 50%; transition: all 0.2s ease; cursor: pointer;">
+              style="width: 18px; height: 18px; font-size: 0.7rem; border-radius: 50%; transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; position: relative;">
         <%= letter %>
       </button>
     <% }) %>
@@ -187,18 +187,21 @@
   }
   .alphabet-indicator {
     color: rgba(255, 255, 255, 0.75) !important;
+    background-color: transparent;
   }
   .alphabet-indicator:hover {
-    background-color: var(--brand-color);
+    background-color: rgba(229, 9, 20, 0.75) !important;
     color: #ffffff !important;
-    transform: scale(1.15);
+    transform: scale(3);
+    z-index: 10;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
   }
   .alphabet-indicator.active-letter {
-    background-color: var(--brand-color);
+    background-color: rgba(229, 9, 20, 0.75) !important;
     color: #ffffff !important;
   }
   .alphabet-indicator.disabled {
-    opacity: 0.2;
+    opacity: 0.15;
     cursor: not-allowed;
   }
 </style>
