@@ -75,8 +75,21 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
 
       <h1 class="h2 fw-extrabold mb-1 d-inline-flex align-items-center justify-content-center gap-2 flex-wrap">
         <%= artist.name %>
-        <a href="https://www.last.fm/es/music/<%= artist.id %>" target="_blank" class="text-secondary fs-6 fw-normal text-decoration-none hover-danger-link" title="Ver perfil en Last.fm">
-          <i class="bi bi-box-arrow-up-right" style="font-size: 0.9rem;" aria-hidden="true"></i>
+        <a href="https://www.last.fm/es/music/<%= artist.id %>" target="_blank" class="text-secondary d-inline-flex align-items-center text-decoration-none hover-lastfm-link" title="Ver perfil en Last.fm">
+          <img src="/images/lastfm.svg" alt="Last.fm" style="width: 32px; height: 32px;">
+        </a>
+        <a href="#" 
+           class="hover-spotify-link d-inline-flex align-items-center text-decoration-none" 
+           title="Escuchar <%= artist.name %> en Spotify"
+           onclick="event.preventDefault(); openSpotify('<%= artist.name %>');">
+          <img src="/images/spotify.svg" alt="Spotify" style="width: 32px; height: 32px;">
+        </a>
+        <a href="https://www.youtube.com/results?search_query=<%= encodeURIComponent(artist.name) %>" 
+           target="_blank" 
+           rel="noopener noreferrer" 
+           class="hover-youtube-link d-inline-flex align-items-center text-decoration-none" 
+           title="Escuchar <%= artist.name %> en Youtube">
+          <img src="/images/youtube.svg" alt="Youtube" style="width: 32px; height: 32px;">
         </a>
       </h1>
       
@@ -275,7 +288,14 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
                    class="hover-spotify-link d-inline-flex align-items-center" 
                    title="Escuchar <%= album.title %> en Spotify"
                    onclick="event.preventDefault(); openSpotify('<%= artist.name %> <%= album.title %>');">
-                  <i class="bi bi-spotify fs-5"></i>
+                  <img src="/images/spotify.svg" alt="Spotify" style="width: 32px; height: 32px; vertical-align: middle;">
+                </a>
+                <a href="https://www.youtube.com/results?search_query=<%= encodeURIComponent(artist.name + ' ' + album.title) %>" 
+                   target="_blank" 
+                   rel="noopener noreferrer" 
+                   class="hover-youtube-link d-inline-flex align-items-center ms-2" 
+                   title="Escuchar <%= album.title %> en Youtube">
+                  <img src="/images/youtube.svg" alt="Youtube" style="width: 32px; height: 32px; vertical-align: middle;">
                 </a>
               </div>
 
@@ -448,6 +468,22 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
   }
   .hover-spotify-link:hover {
     color: #1ed760 !important;
+    transform: scale(1.2) rotate(8deg);
+  }
+
+  /* Efecto hover premium para el botón de YouTube */
+  .hover-youtube-link {
+    transition: transform 0.2s ease;
+  }
+  .hover-youtube-link:hover {
+    transform: scale(1.2) rotate(-8deg);
+  }
+
+  /* Efecto hover premium para el botón de Last.fm */
+  .hover-lastfm-link {
+    transition: transform 0.2s ease;
+  }
+  .hover-lastfm-link:hover {
     transform: scale(1.2) rotate(8deg);
   }
 

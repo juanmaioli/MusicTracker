@@ -114,7 +114,11 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.22.2 (Actual)
+### v1.23.0 (Actual)
+*   **🔗 Enlaces y reproducción rápida de Artista:** Se incorporaron botones estilizados de tamaño `32px` con los logos vectoriales locales (`lastfm.svg`, `spotify.svg` y `youtube.svg`) al lado del nombre del artista en su ficha de detalles, permitiendo visitar su perfil de Last.fm o buscar al artista en Spotify y YouTube.
+*   **🎵 Iconos SVG de reproducción en Álbumes:** Se rediseñó el acceso a reproductores en la grilla de álbumes reemplazando los iconos genéricos por los SVG locales de Spotify y YouTube, escalados a `32px` para mayor visibilidad, e integrando efectos hover premium simétricos de escala y rotación.
+
+### v1.22.2
 *   **⚡ Lazy Loading en Dashboard:** Se implementó la carga diferida nativa (`loading="lazy"` y `decoding="async"`) en las imágenes de la grilla de artistas del inicio, combinándolo con un efecto de transición CSS de fade-in progresivo (`opacity` de 0 a 1) al finalizar la carga física del archivo para optimizar el rendimiento y la fluidez visual de la página.
 
 ### v1.22.1
