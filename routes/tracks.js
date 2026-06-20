@@ -19,7 +19,7 @@ router.post('/:id/favorite', (req, res) => {
   }
 
   const album = db.prepare('SELECT artist_id FROM albums WHERE id = ?').get(track.album_id);
-  res.redirect(`/artists/${album.artist_id}`);
+  res.redirect(`/artists/${encodeURIComponent(album.artist_id)}`);
 });
 
 module.exports = router;

@@ -55,7 +55,7 @@
                 countryCode = flagPath.split('/').pop().replace('.png', '');
               }
             %>
-            <a href="/artists/<%= artist.id %>" class="text-decoration-none artist-grid-item" title="<%= artist.name %>" data-country="<%= countryCode %>">
+            <a href="/artists/<%= encodeURIComponent(artist.id) %>" class="text-decoration-none artist-grid-item" title="<%= artist.name %>" data-country="<%= countryCode %>">
               <div class="artist-card-square mb-2">
                 <% if (artist.image) { %>
                   <img src="<%= artist.image %>" alt="<%= artist.name %>" class="artist-img-square">
@@ -82,6 +82,22 @@
     </div>
   </div>
 </div>
+
+<% if (artists.length > 0) { %>
+  <!-- Abecedario flotante en pantallas medianas y grandes -->
+  <div class="alphabet-sidebar d-none d-md-flex flex-column align-items-center gap-0.5 py-2 px-2 rounded-pill shadow-lg" style="position: fixed; right: 16px; top: 52%; transform: translateY(-50%); z-index: 1050; background-color: rgba(33, 37, 41, 0.55); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.08); max-height: 85vh; overflow-y: auto;">
+    <% 
+      const alphabetStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      alphabetStr.split("").forEach(letter => { 
+    %>
+      <button class="btn btn-link text-decoration-none p-0 d-flex align-items-center justify-content-center alphabet-indicator fw-bold text-center" 
+              data-letter="<%= letter %>" 
+              style="width: 26px; height: 26px; font-size: 0.95rem; border-radius: 50%; transition: all 0.2s ease; cursor: pointer;">
+        <%= letter %>
+      </button>
+    <% }) %>
+  </div>
+<% } %>
 
 <style>
   /* Grilla de 8 columnas en monitores grandes */
@@ -113,6 +129,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-width: 0;
+    width: 100%;
   }
 
   /* Tarjeta cuadrada 1:1 */
@@ -161,15 +179,35 @@
     box-shadow: 0 0 0 0.25rem rgba(229, 9, 20, 0.25) !important;
     background-color: rgba(0, 0, 0, 0.7) !important;
   }
+
+  /* Estilos para el abecedario flotante */
+  .alphabet-sidebar::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+  }
+  .alphabet-indicator {
+    color: rgba(255, 255, 255, 0.75) !important;
+  }
+  .alphabet-indicator:hover {
+    background-color: var(--brand-color);
+    color: #ffffff !important;
+    transform: scale(1.15);
+  }
+  .alphabet-indicator.active-letter {
+    background-color: var(--brand-color);
+    color: #ffffff !important;
+  }
+  .alphabet-indicator.disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+  }
 </style>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const filterInput = document.getElementById('filterInput');
     const countryFilter = document.getElementById('countryFilter');
-    const artistItems = document.querySelectorAll('.artist-grid-item');
-    
-    const countryNames = {
+    const artistItems = document.querySelectorAll('.artist-grid-item');    const countryNames = {
       'estadosunidos': 'Estados Unidos',
       'reinounido': 'Reino Unido',
       'alemania': 'Alemania',
@@ -193,7 +231,29 @@
       'uruguay': 'Uruguay',
       'chile': 'Chile',
       'mexico': 'México',
-      'colombia': 'Colombia'
+      'colombia': 'Colombia',
+      'rumania': 'Rumanía',
+      'panama': 'Panamá',
+      'peru': 'Perú',
+      'monaco': 'Mónaco',
+      'islandia': 'Islandia',
+      'republicadominicana': 'República Dominicana',
+      'republicacheca': 'República Checa',
+      'sudafrica': 'Sudáfrica',
+      'turquia': 'Turquía',
+      'camerun': 'Camerún',
+      'letonia': 'Letonia',
+      'singapur': 'Singapur',
+      'federacionrusa': 'Federación Rusa',
+      'barbados': 'Barbados',
+      'cuba': 'Cuba',
+      'jamaica': 'Jamaica',
+      'puertorico': 'Puerto Rico',
+      'suiza': 'Suiza',
+      'nigeria': 'Nigeria',
+      'serbia': 'Serbia',
+      'tanzania': 'Tanzania',
+      'irlanda': 'Irlanda'
     };
 
     // Crear el mensaje de "no hay resultados"
@@ -234,16 +294,41 @@
       'uruguay': '🇺🇾',
       'chile': '🇨🇱',
       'mexico': '🇲🇽',
-      'colombia': '🇨🇴'
+      'colombia': '🇨🇴',
+      'rumania': '🇷🇴',
+      'panama': '🇵🇦',
+      'peru': '🇵🇪',
+      'monaco': '🇲🇨',
+      'islandia': '🇮🇸',
+      'republicadominicana': '🇩🇴',
+      'republicacheca': '🇨🇿',
+      'sudafrica': '🇿🇦',
+      'turquia': '🇹🇷',
+      'camerun': '🇨🇲',
+      'letonia': '🇱🇻',
+      'singapur': '🇸🇬',
+      'federacionrusa': '🇷🇺',
+      'barbados': '🇧🇧',
+      'cuba': '🇨🇺',
+      'jamaica': '🇯🇲',
+      'puertorico': '🇵🇷',
+      'suiza': '🇨🇭',
+      'nigeria': '🇳🇬',
+      'serbia': '🇷🇸',
+      'tanzania': '🇹🇿',
+      'irlanda': '🇮🇪'
     };
 
     // Inicializar dinámicamente las opciones del selector de países
     if (countryFilter) {
       const uniqueCountries = {};
+      let noCountryCount = 0;
       artistItems.forEach(item => {
         const country = item.getAttribute('data-country');
         if (country) {
           uniqueCountries[country] = (uniqueCountries[country] || 0) + 1;
+        } else {
+          noCountryCount++;
         }
       });
 
@@ -255,7 +340,7 @@
         }
         const nameA = countryNames[a] || a.toUpperCase();
         const nameB = countryNames[b] || b.toUpperCase();
-        return nameA.localeCompare(nameB); // Empate alfabético
+        return nameA.localeCompare(nameB, 'es', { sensitivity: 'base' }); // Empate alfabético
       });
 
       sortedCountries.forEach(code => {
@@ -269,6 +354,23 @@
         option.textContent = `${flag} ${name} (${count})`;
         countryFilter.appendChild(option);
       });
+
+      if (noCountryCount > 0) {
+        const option = document.createElement('option');
+        option.value = 'no_country';
+        option.style.backgroundColor = '#212529';
+        option.style.color = '#ffffff';
+        option.textContent = `🏳️ Sin datos (${noCountryCount})`;
+        countryFilter.appendChild(option);
+      }
+    }
+
+    function cleanText(str) {
+      if (!str) return '';
+      return str.toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ñ/g, 'n');
     }
 
     function filterArtists() {
@@ -276,12 +378,22 @@
       const selectedCountry = countryFilter ? countryFilter.value : '';
       let visibleCount = 0;
 
+      const cleanQuery = cleanText(query);
+
       artistItems.forEach(item => {
-        const name = item.querySelector('.artist-name-text').textContent.toLowerCase();
+        const name = item.querySelector('.artist-name-text').textContent;
+        const cleanName = cleanText(name);
         const country = item.getAttribute('data-country');
 
-        const matchesQuery = name.includes(query);
-        const matchesCountry = !selectedCountry || country === selectedCountry;
+        const matchesQuery = cleanName.includes(cleanQuery);
+        let matchesCountry = false;
+        if (!selectedCountry) {
+          matchesCountry = true;
+        } else if (selectedCountry === 'no_country') {
+          matchesCountry = !country || country === '';
+        } else {
+          matchesCountry = country === selectedCountry;
+        }
 
         if (matchesQuery && matchesCountry) {
           item.classList.remove('d-none');
@@ -303,7 +415,70 @@
       if (badge) {
         badge.textContent = visibleCount;
       }
+
+      // Actualizar qué letras del abecedario están disponibles
+      updateAlphabetState();
     }
+
+    // Lógica del abecedario flotante
+    function getCleanInitial(str) {
+      if (!str) return '';
+      return str.trim().charAt(0).toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ñ/g, 'n');
+    }
+
+    function updateAlphabetState() {
+      const visibleInitials = new Set();
+      artistItems.forEach(item => {
+        if (!item.classList.contains('d-none')) {
+          const name = item.querySelector('.artist-name-text').textContent;
+          const initial = getCleanInitial(name);
+          if (initial) visibleInitials.add(initial);
+        }
+      });
+
+      document.querySelectorAll('.alphabet-indicator').forEach(indicator => {
+        const letter = indicator.getAttribute('data-letter');
+        if (visibleInitials.has(letter)) {
+          indicator.classList.remove('disabled');
+          indicator.style.pointerEvents = 'auto';
+        } else {
+          indicator.classList.add('disabled');
+          indicator.style.pointerEvents = 'none';
+        }
+      });
+    }
+
+    // Inicializar estado del abecedario
+    updateAlphabetState();
+
+    // Event listeners para saltar a letras
+    document.querySelectorAll('.alphabet-indicator').forEach(indicator => {
+      indicator.addEventListener('click', (e) => {
+        e.preventDefault();
+        const letter = indicator.getAttribute('data-letter');
+        const targetItem = Array.from(artistItems).find(item => {
+          if (item.classList.contains('d-none')) return false;
+          const name = item.querySelector('.artist-name-text').textContent;
+          return getCleanInitial(name) === letter;
+        });
+
+        if (targetItem) {
+          targetItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          
+          // Efecto de parpadeo temporal de realce para indicar visualmente dónde saltó
+          targetItem.style.transition = 'outline 0.3s ease';
+          targetItem.style.outline = '2px solid var(--brand-color)';
+          targetItem.style.borderRadius = '12px';
+          
+          setTimeout(() => {
+            targetItem.style.outline = '2px solid transparent';
+          }, 1500);
+        }
+      });
+    });
 
     if (filterInput) {
       filterInput.addEventListener('input', filterArtists);

@@ -19,7 +19,7 @@ router.post('/:id/rate', (req, res) => {
     return res.json({ success: true, rating });
   }
 
-  res.redirect(`/artists/${album.artist_id}`);
+  res.redirect(`/artists/${encodeURIComponent(album.artist_id)}`);
 });
 
 module.exports = router;

@@ -109,7 +109,7 @@
                 </h2>
               </div>
               
-              <form action="/artists/add/<%= artist.id %>" method="POST" class="import-form">
+              <form action="/artists/add/<%= encodeURIComponent(artist.id) %>" method="POST" class="import-form">
                 <button type="submit" class="btn btn-spotify w-100 d-flex align-items-center justify-content-center gap-2">
                   <i class="bi bi-plus-circle-fill"></i>
                   <span>Seguir e Importar</span>
@@ -192,7 +192,7 @@
                         </h2>
                       </div>
                       
-                      <form action="/artists/add/${artist.id}" method="POST" class="import-form">
+                      <form action="/artists/add/${encodeURIComponent(artist.id)}" method="POST" class="import-form">
                         <button type="submit" class="btn btn-spotify w-100 d-flex align-items-center justify-content-center gap-2">
                           <i class="bi bi-plus-circle-fill"></i>
                           <span>Seguir e Importar</span>

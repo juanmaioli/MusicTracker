@@ -184,7 +184,7 @@
       </h2>
       <div class="row g-3">
         <!-- Tarjeta de Descargar Backup -->
-        <div class="col-md-4">
+        <div class="col-12 col-md-6 col-xl">
           <div class="bg-dark bg-opacity-25 p-3 rounded-4 border border-secondary border-opacity-10 d-flex align-items-start gap-3 h-100">
             <div class="bg-danger bg-opacity-10 p-2.5 rounded-3 text-danger fs-4">
               <i class="bi bi-cloud-arrow-down-fill"></i>
@@ -192,14 +192,14 @@
             <div>
               <h3 class="h6 fw-bold text-white mb-1">Exportar Copia</h3>
               <p class="text-secondary small mb-3">Generá y descargá un archivo comprimido .tar.gz con toda tu colección y sus imágenes locales.</p>
-              <a href="/stats/backup" class="btn btn-sm btn-spotify d-inline-flex align-items-center gap-1">
+              <a href="/stats/backup" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1">
                 <i class="bi bi-download"></i> Descargar tar.gz
               </a>
             </div>
           </div>
         </div>
         <!-- Tarjeta de Restaurar Backup -->
-        <div class="col-md-4">
+        <div class="col-12 col-md-6 col-xl">
           <div class="bg-dark bg-opacity-25 p-3 rounded-4 border border-secondary border-opacity-10 d-flex align-items-start gap-3 h-100">
             <div class="bg-warning bg-opacity-10 p-2.5 rounded-3 text-warning fs-4">
               <i class="bi bi-cloud-arrow-up-fill"></i>
@@ -215,18 +215,53 @@
           </div>
         </div>
         <!-- Tarjeta de Importación Batch TXT -->
-        <div class="col-md-4">
+        <div class="col-12 col-md-6 col-xl">
           <div class="bg-dark bg-opacity-25 p-3 rounded-4 border border-secondary border-opacity-10 d-flex align-items-start gap-3 h-100">
             <div class="bg-info bg-opacity-10 p-2.5 rounded-3 text-info fs-4">
               <i class="bi bi-file-earmark-text-fill"></i>
             </div>
             <div>
               <h3 class="h6 fw-bold text-white mb-1">Importar en Lote (.txt)</h3>
-              <p class="text-secondary small mb-3">Subí un archivo de texto con nombres de artistas (uno por línea). Se esperarán 15 segundos entre cada uno.</p>
+              <p class="text-secondary small mb-3">Subí un archivo de texto con nombres de artistas.</p>
               <label for="batchFile" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 m-0 cursor-pointer">
                 <i class="bi bi-file-plus"></i> Seleccionar TXT
               </label>
               <input type="file" id="batchFile" accept=".txt" class="d-none">
+            </div>
+          </div>
+        </div>
+        <!-- Tarjeta de Artistas sin Álbumes -->
+        <div class="col-12 col-md-6 col-xl">
+          <div class="bg-dark bg-opacity-25 p-3 rounded-4 border border-secondary border-opacity-10 d-flex align-items-start gap-3 h-100">
+            <div class="bg-secondary bg-opacity-10 p-2.5 rounded-3 text-secondary fs-4">
+              <i class="bi bi-person-x-fill"></i>
+            </div>
+            <div>
+              <h3 class="h6 fw-bold text-white mb-1">Sin Álbumes</h3>
+              <p class="text-secondary small mb-3">Tenés <span class="text-white fw-bold"><%= artistsWithoutAlbums.length %></span> artistas vacíos.</p>
+              <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 m-0" data-bs-toggle="modal" data-bs-target="#emptyArtistsModal">
+                <i class="bi bi-search"></i> Revisar
+              </button>
+              <% if (artistsWithoutAlbums.length > 0) { %>
+                <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 m-0 ms-1 mt-2" id="downloadAllMissingBtn" title="Descargar álbumes faltantes de todos los artistas">
+                  <i class="bi bi-download"></i> Descargar
+                </button>
+              <% } %>
+            </div>
+          </div>
+        </div>
+        <!-- Tarjeta de Artistas sin Fotos -->
+        <div class="col-12 col-md-6 col-xl">
+          <div class="bg-dark bg-opacity-25 p-3 rounded-4 border border-secondary border-opacity-10 d-flex align-items-start gap-3 h-100">
+            <div class="bg-success bg-opacity-10 p-2.5 rounded-3 text-success fs-4">
+              <i class="bi bi-image"></i>
+            </div>
+            <div>
+              <h3 class="h6 fw-bold text-white mb-1">Sin Fotos</h3>
+              <p class="text-secondary small mb-3">Tenés <span class="text-white fw-bold"><%= artistsWithoutPhotos.length %></span> artistas sin fotos.</p>
+              <button class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 m-0" data-bs-toggle="modal" data-bs-target="#noPhotoArtistsModal">
+                <i class="bi bi-search"></i> Revisar
+              </button>
             </div>
           </div>
         </div>
@@ -315,6 +350,118 @@
       </div>
       <div class="modal-footer border-top border-secondary border-opacity-10 py-3">
         <button type="button" class="btn btn-secondary btn-sm" id="batchDoneBtn" data-bs-dismiss="modal" disabled>Listo</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Artistas sin Álbumes -->
+<div class="modal fade" id="emptyArtistsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content bg-dark border-secondary border-opacity-25 text-white rounded-4 shadow-lg">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-person-x text-secondary me-2"></i>Artistas sin Álbumes
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body p-4">
+        <% if (artistsWithoutAlbums.length === 0) { %>
+          <p class="text-secondary text-center my-4">No hay artistas sin álbumes.</p>
+        <% } else { %>
+          <button class="btn btn-sm btn-outline-spotify w-100 mb-3" id="syncAllEmptyBtn">
+            <i class="bi bi-cloud-arrow-down-fill me-1"></i> Descargar todos los álbumes
+          </button>
+          <div class="list-group list-group-flush bg-transparent">
+            <% artistsWithoutAlbums.forEach(ar => { %>
+              <div class="list-group-item bg-transparent border-secondary border-opacity-10 px-0 d-flex justify-content-between align-items-center">
+                <span class="text-white"><%= ar.name %></span>
+                <div class="d-flex gap-1">
+                  <button class="btn btn-sm btn-outline-spotify sync-single-btn" data-id="<%= ar.id %>" data-name="<%= ar.name %>" title="Descargar Álbumes">
+                    <i class="bi bi-download"></i>
+                  </button>
+                  <a href="/artists/<%= encodeURIComponent(ar.id) %>" class="btn btn-sm btn-outline-secondary">Ir</a>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Artistas sin Fotos -->
+<div class="modal fade" id="noPhotoArtistsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content bg-dark border-secondary border-opacity-25 text-white rounded-4 shadow-lg">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-image text-success me-2"></i>Artistas sin Fotos
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body p-4">
+        <% if (artistsWithoutPhotos.length === 0) { %>
+          <p class="text-secondary text-center my-4">No hay artistas sin fotos.</p>
+        <% } else { %>
+          <div class="list-group list-group-flush bg-transparent">
+            <% artistsWithoutPhotos.forEach(ar => { %>
+              <div class="list-group-item bg-transparent border-secondary border-opacity-10 px-0 d-flex justify-content-between align-items-center">
+                <span class="text-white"><%= ar.name %></span>
+                <a href="/artists/<%= encodeURIComponent(ar.id) %>" class="btn btn-sm btn-outline-secondary">Ir</a>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Progreso de Sincronización de Álbumes -->
+<div class="modal fade" id="syncAlbumsProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="syncAlbumsProgressLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-content bg-dark border-secondary border-opacity-25 text-white rounded-4 shadow-lg">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 py-3">
+        <h5 class="modal-title fw-bold" id="syncAlbumsProgressLabel">
+          <i class="bi bi-cloud-arrow-down text-success me-2"></i>Descargando Álbumes
+        </h5>
+        <button type="button" class="btn-close btn-close-white" id="syncAlbumsCloseBtn" data-bs-dismiss="modal" aria-label="Cerrar" disabled></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Barra de progreso e info principal -->
+        <div class="text-center mb-4">
+          <div class="d-flex justify-content-between mb-2">
+            <span id="syncAlbumsProgressText" class="text-secondary small fw-semibold">Procesando: 0 / 0</span>
+            <span id="syncAlbumsPercentText" class="text-success small fw-bold">0%</span>
+          </div>
+          <div class="progress bg-secondary bg-opacity-25 rounded-pill" style="height: 10px;">
+            <div id="syncAlbumsProgressBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated rounded-pill" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+
+        <!-- Lista de artistas con estado de descarga -->
+        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <i class="bi bi-list-task text-secondary"></i>
+          <span>Artistas a Procesar</span>
+        </h6>
+        <div class="table-responsive style-scrollbar" style="max-height: 250px; overflow-y: auto;">
+          <table class="table table-dark table-hover table-borderless align-middle m-0 small">
+            <thead>
+              <tr class="text-secondary border-bottom border-secondary border-opacity-10">
+                <th scope="col">Artista</th>
+                <th scope="col" class="text-end" style="width: 180px;">Estado</th>
+              </tr>
+            </thead>
+            <tbody id="syncAlbumsTableBody">
+              <!-- Filas dinámicas -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer border-top border-secondary border-opacity-10 py-3">
+        <button type="button" class="btn btn-secondary btn-sm" id="syncAlbumsDoneBtn" data-bs-dismiss="modal" disabled>Listo</button>
       </div>
     </div>
   </div>
@@ -414,35 +561,85 @@
         batchDoneBtn.disabled = true;
         batchCloseBtn.disabled = true;
 
-        // Crear filas en la tabla del modal
-        const rows = {};
-        artists.forEach((name, idx) => {
-          const tr = document.createElement('tr');
-          tr.className = 'hover-track-row';
-          tr.innerHTML = `
-            <td class="text-white-50">${name}</td>
-            <td class="text-end text-secondary fw-semibold" id="batch-row-${idx}">En espera...</td>
-          `;
-          batchTableBody.appendChild(tr);
-          rows[idx] = document.getElementById(`batch-row-${idx}`);
-        });
-
         // Mostrar modal de progreso
         batchModal.show();
 
         // Limpiar archivo input para permitir subir el mismo archivo después
         batchInput.value = '';
 
-        // Procesar secuencialmente
-        for (let i = 0; i < artists.length; i++) {
-          const name = artists[i];
-          const rowEl = rows[i];
+        // Realizar verificación previa de todo el lote
+        let existingMap = {};
+        try {
+          const checkResponse = await fetch('/artists/batch-check', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ names: artists })
+          });
+          const checkResult = await checkResponse.json();
+          if (checkResponse.ok && checkResult.success) {
+            checkResult.existing.forEach(name => {
+              existingMap[name.toLowerCase()] = true;
+            });
+          }
+        } catch (err) {
+          console.error('Error al verificar lote previamente:', err);
+        }
+
+        // Crear filas en la tabla del modal
+        const rows = {};
+        let initialCompleted = 0;
+
+        artists.forEach((name, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover-track-row';
+          
+          const nameLower = name.toLowerCase();
+          const alreadyInCollection = !!existingMap[nameLower];
+          
+          let statusHtml = '';
+          if (alreadyInCollection) {
+            statusHtml = '<span class="text-secondary"><i class="bi bi-info-circle me-1"></i> Ya en colección</span>';
+            initialCompleted++;
+          } else {
+            statusHtml = '<span class="text-warning"><i class="bi bi-hourglass-split me-1"></i> Pendiente</span>';
+          }
+
+          tr.innerHTML = `
+            <td class="text-white-50">${name}</td>
+            <td class="text-end fw-semibold" id="batch-row-${idx}">${statusHtml}</td>
+          `;
+          batchTableBody.appendChild(tr);
+          rows[idx] = document.getElementById(`batch-row-${idx}`);
+        });
+
+        // Inicializar barra de progreso con los ya existentes
+        batchProgressText.textContent = `Procesando: ${initialCompleted} / ${artists.length}`;
+        const initialPercent = Math.round((initialCompleted / artists.length) * 100);
+        batchPercentText.textContent = `${initialPercent}%`;
+        batchProgressBar.style.width = `${initialPercent}%`;
+        batchProgressBar.setAttribute('aria-valuenow', initialPercent);
+
+        // Filtrar la lista de artistas a descargar (los que no existen en la DB)
+        const missingArtists = [];
+        artists.forEach((name, idx) => {
+          const nameLower = name.toLowerCase();
+          if (!existingMap[nameLower]) {
+            missingArtists.push({ name, idx });
+          }
+        });
+
+        let currentCompleted = initialCompleted;
+
+        // Procesar secuencialmente los faltantes
+        for (let i = 0; i < missingArtists.length; i++) {
+          const { name, idx } = missingArtists[i];
+          const rowEl = rows[idx];
 
           // Cambiar estado a "Importando..."
           rowEl.innerHTML = '<span class="spinner-border spinner-border-sm text-info me-1" role="status"></span> Importando...';
-          batchProgressText.textContent = `Procesando: ${i + 1} / ${artists.length}`;
 
-          let skipCooldown = false;
           try {
             const response = await fetch('/artists/batch-add', {
               method: 'POST',
@@ -454,12 +651,7 @@
 
             const result = await response.json();
             if (response.ok && result.success) {
-              if (result.alreadyExists) {
-                rowEl.innerHTML = '<span class="text-secondary"><i class="bi bi-info-circle me-1"></i> Ya en colección</span>';
-                skipCooldown = true;
-              } else {
-                rowEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Importado</span>';
-              }
+              rowEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Importado</span>';
             } else {
               rowEl.innerHTML = `<span class="text-danger" title="${result.error || 'Fallo'}"><i class="bi bi-exclamation-triangle-fill me-1"></i> No encontrado</span>`;
             }
@@ -467,14 +659,16 @@
             rowEl.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Error de red</span>';
           }
 
-          // Actualizar barra de progreso
-          const percent = Math.round(((i + 1) / artists.length) * 100);
+          // Incrementar progreso
+          currentCompleted++;
+          batchProgressText.textContent = `Procesando: ${currentCompleted} / ${artists.length}`;
+          const percent = Math.round((currentCompleted / artists.length) * 100);
           batchPercentText.textContent = `${percent}%`;
           batchProgressBar.style.width = `${percent}%`;
           batchProgressBar.setAttribute('aria-valuenow', percent);
 
-          // Si no es el último elemento y no saltamos cooldown, esperar 15 segundos
-          if (i < artists.length - 1 && !skipCooldown) {
+          // Si no es el último de la lista de descargas, esperar 15 segundos
+          if (i < missingArtists.length - 1) {
             batchCountdownContainer.style.display = 'block';
             let secondsLeft = 15;
             batchCountdown.textContent = secondsLeft;
@@ -493,6 +687,141 @@
         batchCloseBtn.disabled = false;
       };
       reader.readAsText(file);
+    });
+
+    // Lógica para Descarga de Álbumes Faltantes
+    const artistsWithoutAlbumsList = <%- JSON.stringify(artistsWithoutAlbums) %>;
+    const syncProgressModal = new bootstrap.Modal(document.getElementById('syncAlbumsProgressModal'));
+    const syncTableBody = document.getElementById('syncAlbumsTableBody');
+    const syncProgressText = document.getElementById('syncAlbumsProgressText');
+    const syncPercentText = document.getElementById('syncAlbumsPercentText');
+    const syncProgressBar = document.getElementById('syncAlbumsProgressBar');
+    const syncDoneBtn = document.getElementById('syncAlbumsDoneBtn');
+    const syncCloseBtn = document.getElementById('syncAlbumsCloseBtn');
+
+    // Botón Listo/Cerrar recarga para refrescar estadísticas
+    const reloadPage = () => window.location.reload();
+    syncDoneBtn.addEventListener('click', reloadPage);
+    syncCloseBtn.addEventListener('click', reloadPage);
+
+    async function startAlbumSync(artistsToSync) {
+      if (artistsToSync.length === 0) return;
+
+      // Cerrar modal de revisión si está abierto
+      const reviewModalEl = document.getElementById('emptyArtistsModal');
+      const reviewModal = bootstrap.Modal.getInstance(reviewModalEl);
+      if (reviewModal) {
+        reviewModal.hide();
+      }
+
+      // Resetear interfaz del modal de progreso
+      syncTableBody.innerHTML = '';
+      syncProgressText.textContent = `Procesando: 0 / ${artistsToSync.length}`;
+      syncPercentText.textContent = '0%';
+      syncProgressBar.style.width = '0%';
+      syncProgressBar.setAttribute('aria-valuenow', '0');
+      syncDoneBtn.disabled = true;
+      syncCloseBtn.disabled = true;
+
+      // Crear filas iniciales
+      const rows = {};
+      artistsToSync.forEach((artist, idx) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover-track-row';
+        tr.innerHTML = `
+          <td class="text-white-50">${artist.name}</td>
+          <td class="text-end fw-semibold" id="sync-row-${artist.id}"><span class="text-warning"><i class="bi bi-hourglass-split me-1"></i> Pendiente</span></td>
+        `;
+        syncTableBody.appendChild(tr);
+        rows[artist.id] = document.getElementById(`sync-row-${artist.id}`);
+      });
+
+      // Mostrar modal de progreso
+      syncProgressModal.show();
+
+      let completedCount = 0;
+
+      for (let i = 0; i < artistsToSync.length; i++) {
+        const artist = artistsToSync[i];
+        const rowEl = rows[artist.id];
+
+        // Estado: Sincronizando
+        if (rowEl) {
+          rowEl.innerHTML = '<span class="spinner-border spinner-border-sm text-success me-1" role="status"></span> Descargando...';
+        }
+
+        try {
+          const response = await fetch(`/artists/${artist.id}/sync-albums`, {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+          if (response.ok && result.success) {
+            if (rowEl) {
+              rowEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Completado</span>';
+            }
+          } else {
+            if (rowEl) {
+              rowEl.innerHTML = '<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i> Error</span>';
+            }
+          }
+        } catch (err) {
+          if (rowEl) {
+            rowEl.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Red/Timeout</span>';
+          }
+        }
+
+        completedCount++;
+        syncProgressText.textContent = `Procesando: ${completedCount} / ${artistsToSync.length}`;
+        const percent = Math.round((completedCount / artistsToSync.length) * 100);
+        syncPercentText.textContent = `${percent}%`;
+        syncProgressBar.style.width = `${percent}%`;
+        syncProgressBar.setAttribute('aria-valuenow', percent);
+
+        // Pequeño retardo de cortesía para rate limit entre descargas
+        if (i < artistsToSync.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+      }
+
+      // Habilitar botones de finalización
+      syncDoneBtn.disabled = false;
+      syncCloseBtn.disabled = false;
+    }
+
+    // Listener para botón en la tarjeta
+    const downloadAllMissingBtn = document.getElementById('downloadAllMissingBtn');
+    if (downloadAllMissingBtn) {
+      downloadAllMissingBtn.addEventListener('click', () => {
+        if (confirm(`¿Querés descargar los álbumes de los ${artistsWithoutAlbumsList.length} artistas? Este proceso puede demorar unos minutos.`)) {
+          startAlbumSync(artistsWithoutAlbumsList);
+        }
+      });
+    }
+
+    // Listener para botón "Descargar todos" en el modal de revisión
+    const syncAllEmptyBtn = document.getElementById('syncAllEmptyBtn');
+    if (syncAllEmptyBtn) {
+      syncAllEmptyBtn.addEventListener('click', () => {
+        if (confirm(`¿Querés descargar los álbumes de todos los artistas sin álbumes?`)) {
+          startAlbumSync(artistsWithoutAlbumsList);
+        }
+      });
+    }
+
+    // Listeners para botones individuales en el modal
+    document.querySelectorAll('.sync-single-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const button = e.currentTarget;
+        const id = button.getAttribute('data-id');
+        const name = button.getAttribute('data-name');
+        if (confirm(`¿Querés descargar los álbumes de "${name}"?`)) {
+          startAlbumSync([{ id, name }]);
+        }
+      });
     });
   });
 </script>

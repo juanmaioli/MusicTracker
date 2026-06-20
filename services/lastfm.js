@@ -389,6 +389,7 @@ module.exports = {
   getArtistAlbums,
   getAlbumTracks,
   getMusicBrainzRatings,
+  getSafeSlug,
   sleep
 };
 

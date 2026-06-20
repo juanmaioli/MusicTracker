@@ -55,6 +55,9 @@ router.get('/', (req, res) => {
     a.genresList = a.genres ? JSON.parse(a.genres).slice(0, 3) : [];
   });
 
+  // Ordenamiento alfabético insensible a acentos y mayúsculas
+  artists.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+
   res.render('index', {
     totalArtists,
     totalAlbums,
@@ -130,6 +133,23 @@ router.get('/stats', (req, res) => {
       .slice(0, 5)
       .map(entry => ({ name: entry[0], count: entry[1] }));
 
+    // 5. Artistas sin álbumes
+    const artistsWithoutAlbums = db.prepare(`
+      SELECT ar.id, ar.name
+      FROM artists ar
+      LEFT JOIN albums al ON ar.id = al.artist_id
+      WHERE al.id IS NULL
+      ORDER BY ar.name COLLATE NOCASE ASC
+    `).all();
+
+    // 6. Artistas sin fotos
+    const artistsWithoutPhotos = db.prepare(`
+      SELECT id, name
+      FROM artists
+      WHERE image IS NULL OR image = ''
+      ORDER BY name COLLATE NOCASE ASC
+    `).all();
+
     res.render('stats', {
       title: 'Estadísticas',
       totalArtists,
@@ -141,7 +161,9 @@ router.get('/stats', (req, res) => {
       totalDurationStr,
       topAlbums,
       decades,
-      topGenres
+      topGenres,
+      artistsWithoutAlbums,
+      artistsWithoutPhotos
     });
   } catch (err) {
     console.error('Error al cargar estadísticas:', err);

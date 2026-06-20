@@ -159,7 +159,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
 
 
       <!-- Eliminar Artista -->
-      <form action="/artists/<%= artist.id %>/delete" method="POST" onsubmit="return confirm('¿Estás seguro de que querés eliminar a este artista de tu base de datos? Esto también borrará sus álbumes y calificaciones.');">
+      <form action="/artists/<%= encodeURIComponent(artist.id) %>/delete" method="POST" onsubmit="return confirm('¿Estás seguro de que querés eliminar a este artista de tu base de datos? Esto también borrará sus álbumes y calificaciones.');">
         <button class="btn btn-outline-danger w-100 btn-sm" type="submit">
           <i class="bi bi-trash3 me-1"></i>Dejar de Seguir y Borrar
         </button>
@@ -222,7 +222,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
           <span class="badge bg-secondary-subtle text-secondary-emphasis rounded-pill fs-6 fw-normal"><%= albums.length %></span>
         </h2>
         <div class="d-flex gap-2 flex-wrap">
-          <form action="/artists/<%= artist.id %>/sync-albums" method="POST" id="syncAlbumsForm">
+          <form action="/artists/<%= encodeURIComponent(artist.id) %>/sync-albums" method="POST" id="syncAlbumsForm">
             <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-3 d-flex align-items-center gap-1" id="syncAlbumsBtn">
               <i class="bi bi-arrow-repeat"></i> Actualizar Álbumes
             </button>
@@ -589,7 +589,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
     setBtnText.textContent = 'Estableciendo...';
     
     try {
-      const response = await fetch(`/artists/<%= artist.id %>/set-image`, {
+      const response = await fetch(`/artists/<%= encodeURIComponent(artist.id) %>/set-image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -642,7 +642,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
     deleteBtnText.textContent = 'Borrando...';
 
     try {
-      const response = await fetch(`/artists/<%= artist.id %>/delete-image`, {
+      const response = await fetch(`/artists/<%= encodeURIComponent(artist.id) %>/delete-image`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -721,7 +721,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
     syncBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Actualizando...';
 
     try {
-      const response = await fetch(`/artists/<%= artist.id %>/sync-gallery`, {
+      const response = await fetch(`/artists/<%= encodeURIComponent(artist.id) %>/sync-gallery`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json'
@@ -1006,7 +1006,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
         const artistId = btn.dataset.artistId;
         
         try {
-          const response = await fetch(`/artists/${artistId}/albums/${albumId}/delete`, {
+          const response = await fetch(`/artists/${encodeURIComponent(artistId)}/albums/${albumId}/delete`, {
             method: 'POST',
             headers: {
               'Accept': 'application/json'
@@ -1054,7 +1054,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
     const deceased = document.getElementById('inputDeceased').value;
     
     try {
-      const response = await fetch(`/artists/<%= artist.id %>/metadata`, {
+      const response = await fetch(`/artists/<%= encodeURIComponent(artist.id) %>/metadata`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

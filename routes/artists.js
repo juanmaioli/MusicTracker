@@ -23,15 +23,31 @@ router.get('/search', async (req, res) => {
   }
   res.render('search', { query, results, title: 'Buscar Artistas' });
 });
+// Obtener el artista buscando por todas las posibles variantes de ID (codificadas/decodificadas) para máxima robustez
+function getArtistById(id) {
+  if (!id) return null;
+  const variations = [
+    id,
+    decodeURIComponent(id),
+    lastfm.getSafeSlug(id),
+    decodeURIComponent(lastfm.getSafeSlug(id))
+  ];
+  const uniqueVariations = [...new Set(variations)];
+  
+  for (const variant of uniqueVariations) {
+    const artist = db.prepare('SELECT * FROM artists WHERE id = ?').get(variant);
+    if (artist) return artist;
+  }
+  return null;
+}
 
 // Detalle del artista (desde SQLite)
 router.get('/:id', (req, res) => {
-  const artistId = req.params.id;
-
-  const artist = db.prepare('SELECT * FROM artists WHERE id = ?').get(artistId);
+  const artist = getArtistById(req.params.id);
   if (!artist) {
     return res.status(404).render('error', { message: 'Artista no encontrado en la base de datos local.', title: 'Error' });
   }
+  const artistId = artist.id;
 
   // Parsear géneros e imágenes de la galería
   artist.genresList = artist.genres ? JSON.parse(artist.genres) : [];
@@ -51,16 +67,15 @@ router.get('/:id', (req, res) => {
 // Agregar artista completo de Last.fm a SQLite
 router.post('/add/:id', async (req, res) => {
   req.setTimeout(180000); // 3 minutos para prevenir timeouts en descargas de galerías grandes
-  const artistId = req.params.id; // El id es el slug de Last.fm
-
-  logger.info(`[Importador] Iniciando importación del artista slug: "${artistId}"`);
-
-  // Verificar si ya existe
-  const exists = db.prepare('SELECT id FROM artists WHERE id = ?').get(artistId);
-  if (exists) {
-    logger.info(`[Importador] El artista slug "${artistId}" ya existe en SQLite. Redirigiendo...`);
-    return res.redirect(`/artists/${artistId}`);
+  const existingArtist = getArtistById(req.params.id);
+  
+  if (existingArtist) {
+    logger.info(`[Importador] El artista "${existingArtist.name}" ya existe en SQLite (ID: ${existingArtist.id}). Redirigiendo...`);
+    return res.redirect(`/artists/${encodeURIComponent(existingArtist.id)}`);
   }
+
+  const artistId = decodeURIComponent(req.params.id); // El id es el slug de Last.fm
+  logger.info(`[Importador] Iniciando importación del artista slug: "${artistId}"`);
 
   try {
     // 1. Obtener detalles del artista y biografía
@@ -152,7 +167,7 @@ router.post('/add/:id', async (req, res) => {
     addArtistTransaction(artistData, albumsWithTracks);
     logger.info(`[Importador] Inserción finalizada con éxito. Artista "${artistData.name}" y sus álbumes agregados.`);
 
-    res.redirect(`/artists/${artistId}`);
+    res.redirect(`/artists/${encodeURIComponent(artistId)}`);
   } catch (error) {
     logger.error('Error al importar artista de Last.fm:', error);
     res.status(500).render('error', { message: 'Ocurrió un error al importar el artista y su discografía desde Last.fm.', title: 'Error' });
@@ -162,13 +177,11 @@ router.post('/add/:id', async (req, res) => {
 // Sincronizar/Actualizar sólo los álbumes del artista desde Last.fm y MusicBrainz
 router.post('/:id/sync-albums', async (req, res) => {
   req.setTimeout(180000); // 3 minutos para prevenir timeouts en descargas de galerías grandes
-  const artistId = req.params.id;
-
-  // 1. Verificar si el artista existe
-  const artist = db.prepare('SELECT name FROM artists WHERE id = ?').get(artistId);
+  const artist = getArtistById(req.params.id);
   if (!artist) {
     return res.status(404).render('error', { message: 'Artista no encontrado en la base de datos local.', title: 'Error' });
   }
+  const artistId = artist.id;
 
   logger.info(`[Sincronizador] Sincronizando álbumes para artista: "${artist.name}" (ID: ${artistId})`);
 
@@ -273,9 +286,15 @@ router.post('/:id/sync-albums', async (req, res) => {
     syncAlbumsTransaction(albumsWithTracks);
     logger.info(`[Sincronizador] Sincronización finalizada correctamente para "${artist.name}".`);
 
-    res.redirect(`/artists/${artistId}`);
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.json({ success: true, artistId });
+    }
+    res.redirect(`/artists/${encodeURIComponent(artistId)}`);
   } catch (error) {
     logger.error('Error al sincronizar álbumes:', error);
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf('json') > -1)) {
+      return res.status(500).json({ success: false, error: 'Ocurrió un error al sincronizar la discografía del artista.' });
+    }
     res.status(500).render('error', { message: 'Ocurrió un error al sincronizar la discografía del artista.', title: 'Error' });
   }
 });
@@ -306,16 +325,24 @@ router.post('/:id/albums/:albumId/delete', (req, res) => {
 
 // Actualizar notas personales
 router.post('/:id/notes', (req, res) => {
-  const artistId = req.params.id;
+  const artist = getArtistById(req.params.id);
+  if (!artist) {
+    return res.status(404).render('error', { message: 'Artista no encontrado.', title: 'Error' });
+  }
+  const artistId = artist.id;
   const { notes } = req.body;
 
   db.prepare('UPDATE artists SET notes = ? WHERE id = ?').run(notes || '', artistId);
-  res.redirect(`/artists/${artistId}`);
+  res.redirect(`/artists/${encodeURIComponent(artistId)}`);
 });
 
 // Actualizar imagen principal del artista
 router.post('/:id/set-image', (req, res) => {
-  const artistId = req.params.id;
+  const artist = getArtistById(req.params.id);
+  if (!artist) {
+    return res.status(404).json({ success: false, error: 'Artista no encontrado.' });
+  }
+  const artistId = artist.id;
   const { imageUrl } = req.body;
 
   if (!imageUrl) {
@@ -333,11 +360,14 @@ router.post('/:id/set-image', (req, res) => {
 
 // Actualizar metadata del artista
 router.post('/:id/metadata', (req, res) => {
-  const artistId = req.params.id;
+  const artist = getArtistById(req.params.id);
+  if (!artist) {
+    return res.status(404).json({ success: false, error: 'Artista no encontrado.' });
+  }
+  const artistId = artist.id;
   const { formedIn, birthDate, birthPlace, activeYears, deceased } = req.body;
 
   try {
-    const artist = db.prepare('SELECT metadata FROM artists WHERE id = ?').get(artistId);
     let metadata = {};
     if (artist && artist.metadata) {
       try {
@@ -369,7 +399,11 @@ router.post('/:id/metadata', (req, res) => {
 
 // Borrar una foto de la galería del artista
 router.post('/:id/delete-image', (req, res) => {
-  const artistId = req.params.id;
+  const artist = getArtistById(req.params.id);
+  if (!artist) {
+    return res.status(404).json({ success: false, error: 'Artista no encontrado.' });
+  }
+  const artistId = artist.id;
   const { imageUrl } = req.body;
 
   if (!imageUrl) {
@@ -420,14 +454,13 @@ router.post('/:id/delete-image', (req, res) => {
 
 // Sincronizar/actualizar la galería de fotos del artista desde Last.fm
 router.post('/:id/sync-gallery', async (req, res) => {
-  const artistId = req.params.id;
+  const artist = getArtistById(req.params.id);
+  if (!artist) {
+    return res.status(404).json({ success: false, error: 'Artista no encontrado.' });
+  }
+  const artistId = artist.id;
 
   try {
-    const artist = db.prepare('SELECT name, image, images FROM artists WHERE id = ?').get(artistId);
-    if (!artist) {
-      return res.status(404).json({ success: false, error: 'Artista no encontrado.' });
-    }
-
     logger.info(`[Sincronizador Galería] Buscando nuevas fotos en Last.fm para "${artist.name}"...`);
     const artistData = await lastfm.getArtistDetail(artistId);
 
@@ -480,11 +513,14 @@ router.post('/:id/sync-gallery', async (req, res) => {
 
 // Eliminar artista de SQLite (borrado en cascada)
 router.post('/:id/delete', (req, res) => {
-  const artistId = req.params.id;
+  const artist = getArtistById(req.params.id);
+  if (!artist) {
+    return res.status(404).render('error', { message: 'Artista no encontrado.', title: 'Error' });
+  }
+  const artistId = artist.id;
 
   try {
     // 1. Obtener las rutas de imágenes antes de borrar de la base de datos
-    const artist = db.prepare('SELECT image, images FROM artists WHERE id = ?').get(artistId);
     const albums = db.prepare('SELECT cover_image FROM albums WHERE artist_id = ?').all(artistId);
 
     // 2. Eliminar de la base de datos (ON DELETE CASCADE se encarga de álbumes y tracks en DB)
@@ -519,6 +555,36 @@ router.post('/:id/delete', (req, res) => {
   }
 
   res.redirect('/');
+});
+
+// Verificar lote de nombres de artistas contra la base de datos local
+router.post('/batch-check', (req, res) => {
+  const { names } = req.body;
+  if (!names || !Array.isArray(names)) {
+    return res.status(400).json({ success: false, error: 'Falta la lista de nombres de artistas.' });
+  }
+
+  try {
+    const existing = [];
+    const missing = [];
+    const checkStmt = db.prepare('SELECT name FROM artists WHERE name = ? COLLATE NOCASE');
+
+    for (const name of names) {
+      const trimmedName = name.trim();
+      if (!trimmedName) continue;
+      const row = checkStmt.get(trimmedName);
+      if (row) {
+        existing.push(trimmedName);
+      } else {
+        missing.push(trimmedName);
+      }
+    }
+
+    res.json({ success: true, existing, missing });
+  } catch (error) {
+    console.error('Error al verificar lote de artistas:', error);
+    res.status(500).json({ success: false, error: 'Ocurrió un error al verificar los artistas.' });
+  }
 });
 
 // Importación batch asíncrona de un artista por nombre
