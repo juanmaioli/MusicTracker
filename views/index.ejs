@@ -58,7 +58,7 @@
             <a href="/artists/<%= encodeURIComponent(artist.id) %>" class="text-decoration-none artist-grid-item" title="<%= artist.name %>" data-country="<%= countryCode %>">
               <div class="artist-card-square mb-2">
                 <% if (artist.image) { %>
-                  <img src="<%= artist.image %>" alt="<%= artist.name %>" class="artist-img-square">
+                  <img src="<%= artist.image %>" alt="<%= artist.name %>" class="artist-img-square lazy-image" loading="lazy" decoding="async" onload="this.classList.add('loaded')">
                 <% } else { %>
                   <div class="artist-img-square bg-secondary d-flex align-items-center justify-content-center text-dark">
                     <i class="bi bi-person-fill fs-2"></i>
@@ -155,6 +155,15 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+  }
+
+  .lazy-image {
+    opacity: 0;
+    transition: opacity 0.35s ease-in-out;
+  }
+
+  .lazy-image.loaded {
+    opacity: 1;
   }
 
   /* Nombre abajo de la imagen */

@@ -114,7 +114,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.22.1 (Actual)
+### v1.22.2 (Actual)
+*   **⚡ Lazy Loading en Dashboard:** Se implementó la carga diferida nativa (`loading="lazy"` y `decoding="async"`) en las imágenes de la grilla de artistas del inicio, combinándolo con un efecto de transición CSS de fade-in progresivo (`opacity` de 0 a 1) al finalizar la carga física del archivo para optimizar el rendimiento y la fluidez visual de la página.
+
+### v1.22.1
 *   **🎨 Efecto Hover en Abecedario:** Se redujo el tamaño de fuente y del botón del abecedario flotante por defecto. Al pasar el cursor por encima, la letra se magnifica tres veces (`scale(3)`) con una animación fluida sobre un círculo de fondo rojo translúcido al 75% de opacidad para mejorar el realce visual.
 
 ### v1.22.0
