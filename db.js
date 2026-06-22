@@ -65,6 +65,25 @@ db.exec(`
     is_favorite INTEGER DEFAULT 0,
     FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS import_jobs (
+    id TEXT PRIMARY KEY,
+    status TEXT NOT NULL DEFAULT 'pending',
+    total_items INTEGER NOT NULL DEFAULT 0,
+    completed_items INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS import_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    job_id TEXT NOT NULL,
+    artist_name TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    error_message TEXT,
+    processed_at DATETIME,
+    FOREIGN KEY (job_id) REFERENCES import_jobs(id) ON DELETE CASCADE
+  );
 `);
 
 module.exports = db;

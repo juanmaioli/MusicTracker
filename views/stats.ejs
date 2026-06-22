@@ -259,9 +259,14 @@
             <div>
               <h3 class="h6 fw-bold text-white mb-1">Sin Fotos</h3>
               <p class="text-secondary small mb-3">Tenés <span class="text-white fw-bold"><%= artistsWithoutPhotos.length %></span> artistas sin fotos.</p>
-              <button class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 m-0" data-bs-toggle="modal" data-bs-target="#noPhotoArtistsModal">
-                <i class="bi bi-search"></i> Revisar
-              </button>
+              <div class="d-flex gap-1.5 flex-wrap">
+                <button class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 m-0" data-bs-toggle="modal" data-bs-target="#noPhotoArtistsModal">
+                  <i class="bi bi-search"></i> Revisar
+                </button>
+                <button class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 m-0" id="detectBwPhotosBtn">
+                  <i class="bi bi-palette"></i> Fotos B&W
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -323,9 +328,9 @@
           <div class="progress bg-secondary bg-opacity-25 rounded-pill" style="height: 10px;">
             <div id="batchProgressBar" class="progress-bar bg-info progress-bar-striped progress-bar-animated rounded-pill" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
           </div>
-          <!-- Contador de cuenta regresiva de 15 segundos -->
-          <div id="batchCountdownContainer" class="mt-3 text-secondary small fw-medium" style="display: none;">
-            Próximo artista en: <span id="batchCountdown" class="text-info fw-bold fs-5">15</span> segundos...
+          <!-- Información de procesamiento en segundo plano -->
+          <div id="batchCountdownContainer" class="mt-3 text-secondary small fw-medium">
+            <span class="text-info"><i class="bi bi-info-circle me-1"></i> Tareas en segundo plano.</span> Podés cerrar esta ventana y el proceso continuará.
           </div>
         </div>
 
@@ -348,8 +353,9 @@
           </table>
         </div>
       </div>
-      <div class="modal-footer border-top border-secondary border-opacity-10 py-3">
-        <button type="button" class="btn btn-secondary btn-sm" id="batchDoneBtn" data-bs-dismiss="modal" disabled>Listo</button>
+      <div class="modal-footer border-top border-secondary border-opacity-10 py-3 d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-danger btn-sm" id="batchCancelBtn" style="display: none;"><i class="bi bi-x-circle me-1"></i> Cancelar Importación</button>
+        <button type="button" class="btn btn-secondary btn-sm ms-auto" id="batchDoneBtn" data-bs-dismiss="modal" disabled>Listo</button>
       </div>
     </div>
   </div>
@@ -414,6 +420,41 @@
             <% }) %>
           </div>
         <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Artistas con Fotos B&W -->
+<div class="modal fade" id="bwPhotosModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content bg-dark border-secondary border-opacity-25 text-white rounded-4 shadow-lg">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-palette text-info me-2"></i>Fotos en Blanco y Negro
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body p-4">
+        <!-- Spinner y Progreso del análisis -->
+        <div id="bwAnalysisProgress" class="text-center my-4">
+          <div class="spinner-border text-info mb-3" role="status">
+            <span class="visually-hidden">Analizando...</span>
+          </div>
+          <p class="text-secondary small mb-1" id="bwAnalysisText">Analizando imágenes de la colección...</p>
+          <div class="progress bg-secondary bg-opacity-25 rounded-pill mx-auto mt-2" style="height: 6px; max-width: 250px;">
+            <div id="bwAnalysisBar" class="progress-bar bg-info rounded-pill" role="progressbar" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Listado resultante -->
+        <div id="bwAnalysisResults" style="display: none;">
+          <p class="text-secondary small mb-3"><i class="bi bi-info-circle me-1"></i> Artistas con al menos una foto en blanco y negro en su galería:</p>
+          <div id="bwArtistsList" class="list-group list-group-flush bg-transparent" style="max-height: 300px; overflow-y: auto;">
+            <!-- Filas dinámicas -->
+          </div>
+          <p id="noBwArtistsMsg" class="text-secondary text-center my-4" style="display: none;">No se encontraron artistas con fotos en blanco y negro.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -523,7 +564,7 @@
     restoreInput.addEventListener('change', (e) => handleRestore(e.target.files[0]));
     restoreInputSec.addEventListener('change', (e) => handleRestore(e.target.files[0]));
 
-    // Lógica de Importación en Lote (Batch)
+    // Lógica de Importación en Lote (Batch con Background Worker)
     const batchInput = document.getElementById('batchFile');
     const batchModal = new bootstrap.Modal(document.getElementById('batchModal'));
     const batchTableBody = document.getElementById('batchTableBody');
@@ -531,9 +572,122 @@
     const batchPercentText = document.getElementById('batchPercentText');
     const batchProgressBar = document.getElementById('batchProgressBar');
     const batchCountdownContainer = document.getElementById('batchCountdownContainer');
-    const batchCountdown = document.getElementById('batchCountdown');
+    const batchCancelBtn = document.getElementById('batchCancelBtn');
     const batchDoneBtn = document.getElementById('batchDoneBtn');
     const batchCloseBtn = document.getElementById('batchCloseBtn');
+
+    let batchPollInterval = null;
+    let currentJobId = null;
+
+    function stopBatchPolling() {
+      if (batchPollInterval) {
+        clearInterval(batchPollInterval);
+        batchPollInterval = null;
+      }
+    }
+
+    function startPollingJob(jobId, artistNamesList) {
+      currentJobId = jobId;
+      stopBatchPolling();
+      
+      batchCancelBtn.style.display = 'inline-block';
+      batchDoneBtn.disabled = true;
+      batchCloseBtn.disabled = true;
+
+      const rows = {};
+      
+      if (batchTableBody.children.length === 0) {
+        artistNamesList.forEach((name, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover-track-row';
+          tr.innerHTML = `
+            <td class="text-white-50">${name}</td>
+            <td class="text-end fw-semibold" id="batch-row-${idx}"><span class="text-warning"><i class="bi bi-hourglass-split me-1"></i> Pendiente</span></td>
+          `;
+          batchTableBody.appendChild(tr);
+          rows[name.toLowerCase().trim()] = document.getElementById(`batch-row-${idx}`);
+        });
+      } else {
+        const children = batchTableBody.children;
+        for (let i = 0; i < children.length; i++) {
+          const nameEl = children[i].querySelector('td');
+          if (nameEl) {
+            const name = nameEl.textContent.toLowerCase().trim();
+            rows[name] = children[i].querySelector('td.text-end');
+          }
+        }
+      }
+
+      batchPollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`/artists/batch-job/${jobId}`);
+          if (!response.ok) return;
+
+          const result = await response.json();
+          if (!result.success) return;
+
+          const { job, items } = result;
+
+          batchProgressText.textContent = `Procesando: ${job.completed_items} / ${job.total_items}`;
+          const percent = Math.round((job.completed_items / job.total_items) * 100);
+          batchPercentText.textContent = `${percent}%`;
+          batchProgressBar.style.width = `${percent}%`;
+          batchProgressBar.setAttribute('aria-valuenow', percent);
+
+          items.forEach(item => {
+            const cleanName = item.artist_name.toLowerCase().trim();
+            const rowEl = rows[cleanName];
+            if (rowEl) {
+              if (item.status === 'completed') {
+                rowEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Completado</span>';
+              } else if (item.status === 'failed') {
+                rowEl.innerHTML = `<span class="text-danger" title="${item.error_message || 'Fallo'}"><i class="bi bi-exclamation-triangle-fill me-1"></i> Fallido</span>`;
+              } else if (item.status === 'processing') {
+                rowEl.innerHTML = '<span class="spinner-border spinner-border-sm text-info me-1" role="status"></span> Importando...';
+              } else {
+                rowEl.innerHTML = '<span class="text-warning"><i class="bi bi-hourglass-split me-1"></i> Pendiente</span>';
+              }
+            }
+          });
+
+          if (job.status === 'completed' || job.status === 'failed' || job.status === 'cancelled') {
+            stopBatchPolling();
+            batchCancelBtn.style.display = 'none';
+            batchDoneBtn.disabled = false;
+            batchCloseBtn.disabled = false;
+            
+            if (job.status === 'cancelled') {
+              batchCountdownContainer.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Importación cancelada por el usuario.</span>';
+            } else {
+              batchCountdownContainer.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Importación finalizada con éxito.</span>';
+            }
+          }
+        } catch (err) {
+          console.error('Error al consultar estado de Job:', err);
+        }
+      }, 2000);
+    }
+
+    batchCancelBtn.addEventListener('click', async () => {
+      if (!currentJobId) return;
+      if (!confirm('¿Estás seguro de que querés cancelar la importación en segundo plano? Los artistas pendientes se cancelarán.')) return;
+
+      batchCancelBtn.disabled = true;
+      try {
+        const response = await fetch(`/artists/batch-job/${currentJobId}/cancel`, { method: 'POST' });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          // Polling controlará el final en el próximo tick
+        } else {
+          alert('No se pudo cancelar el Job: ' + (result.error || 'error desconocido.'));
+          batchCancelBtn.disabled = false;
+        }
+      } catch (err) {
+        console.error('Error al intentar cancelar Job:', err);
+        alert('Error de red al cancelar importación.');
+        batchCancelBtn.disabled = false;
+      }
+    });
 
     batchInput.addEventListener('change', async (e) => {
       const file = e.target.files[0];
@@ -551,23 +705,20 @@
           return;
         }
 
-        // Resetear interfaz del modal
         batchTableBody.innerHTML = '';
         batchProgressText.textContent = `Procesando: 0 / ${artists.length}`;
         batchPercentText.textContent = '0%';
         batchProgressBar.style.width = '0%';
         batchProgressBar.setAttribute('aria-valuenow', '0');
-        batchCountdownContainer.style.display = 'none';
+        batchCancelBtn.disabled = false;
+        batchCancelBtn.style.display = 'none';
         batchDoneBtn.disabled = true;
         batchCloseBtn.disabled = true;
+        batchCountdownContainer.innerHTML = '<span class="text-info"><i class="bi bi-info-circle me-1"></i> Tareas en segundo plano.</span> Podés cerrar esta ventana y el proceso continuará.';
 
-        // Mostrar modal de progreso
         batchModal.show();
-
-        // Limpiar archivo input para permitir subir el mismo archivo después
         batchInput.value = '';
 
-        // Realizar verificación previa de todo el lote
         let existingMap = {};
         try {
           const checkResponse = await fetch('/artists/batch-check', {
@@ -580,28 +731,22 @@
           const checkResult = await checkResponse.json();
           if (checkResponse.ok && checkResult.success) {
             checkResult.existing.forEach(name => {
-              existingMap[name.toLowerCase()] = true;
+              existingMap[name.toLowerCase().trim()] = true;
             });
           }
         } catch (err) {
           console.error('Error al verificar lote previamente:', err);
         }
 
-        // Crear filas en la tabla del modal
-        const rows = {};
-        let initialCompleted = 0;
-
         artists.forEach((name, idx) => {
           const tr = document.createElement('tr');
           tr.className = 'hover-track-row';
-          
-          const nameLower = name.toLowerCase();
-          const alreadyInCollection = !!existingMap[nameLower];
+          const nameClean = name.toLowerCase().trim();
+          const alreadyInCollection = !!existingMap[nameClean];
           
           let statusHtml = '';
           if (alreadyInCollection) {
             statusHtml = '<span class="text-secondary"><i class="bi bi-info-circle me-1"></i> Ya en colección</span>';
-            initialCompleted++;
           } else {
             statusHtml = '<span class="text-warning"><i class="bi bi-hourglass-split me-1"></i> Pendiente</span>';
           }
@@ -611,83 +756,57 @@
             <td class="text-end fw-semibold" id="batch-row-${idx}">${statusHtml}</td>
           `;
           batchTableBody.appendChild(tr);
-          rows[idx] = document.getElementById(`batch-row-${idx}`);
         });
 
-        // Inicializar barra de progreso con los ya existentes
-        batchProgressText.textContent = `Procesando: ${initialCompleted} / ${artists.length}`;
-        const initialPercent = Math.round((initialCompleted / artists.length) * 100);
-        batchPercentText.textContent = `${initialPercent}%`;
-        batchProgressBar.style.width = `${initialPercent}%`;
-        batchProgressBar.setAttribute('aria-valuenow', initialPercent);
+        try {
+          const response = await fetch('/artists/batch-import', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ names: artists })
+          });
 
-        // Filtrar la lista de artistas a descargar (los que no existen en la DB)
-        const missingArtists = [];
-        artists.forEach((name, idx) => {
-          const nameLower = name.toLowerCase();
-          if (!existingMap[nameLower]) {
-            missingArtists.push({ name, idx });
+          const result = await response.json();
+          if (response.ok && result.success) {
+            startPollingJob(result.jobId, artists);
+          } else {
+            batchTableBody.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Error al crear la tarea de importación: ${result.error || 'Error desconocido'}</td></tr>`;
+            batchCloseBtn.disabled = false;
           }
-        });
-
-        let currentCompleted = initialCompleted;
-
-        // Procesar secuencialmente los faltantes
-        for (let i = 0; i < missingArtists.length; i++) {
-          const { name, idx } = missingArtists[i];
-          const rowEl = rows[idx];
-
-          // Cambiar estado a "Importando..."
-          rowEl.innerHTML = '<span class="spinner-border spinner-border-sm text-info me-1" role="status"></span> Importando...';
-
-          try {
-            const response = await fetch('/artists/batch-add', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ name })
-            });
-
-            const result = await response.json();
-            if (response.ok && result.success) {
-              rowEl.innerHTML = '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i> Importado</span>';
-            } else {
-              rowEl.innerHTML = `<span class="text-danger" title="${result.error || 'Fallo'}"><i class="bi bi-exclamation-triangle-fill me-1"></i> No encontrado</span>`;
-            }
-          } catch (err) {
-            rowEl.innerHTML = '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i> Error de red</span>';
-          }
-
-          // Incrementar progreso
-          currentCompleted++;
-          batchProgressText.textContent = `Procesando: ${currentCompleted} / ${artists.length}`;
-          const percent = Math.round((currentCompleted / artists.length) * 100);
-          batchPercentText.textContent = `${percent}%`;
-          batchProgressBar.style.width = `${percent}%`;
-          batchProgressBar.setAttribute('aria-valuenow', percent);
-
-          // Si no es el último de la lista de descargas, esperar 15 segundos
-          if (i < missingArtists.length - 1) {
-            batchCountdownContainer.style.display = 'block';
-            let secondsLeft = 15;
-            batchCountdown.textContent = secondsLeft;
-
-            while (secondsLeft > 0) {
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              secondsLeft--;
-              batchCountdown.textContent = secondsLeft;
-            }
-            batchCountdownContainer.style.display = 'none';
-          }
+        } catch (err) {
+          batchTableBody.innerHTML = '<tr><td colspan="2" class="text-center text-danger">Error de red al iniciar la importación.</td></tr>';
+          batchCloseBtn.disabled = false;
         }
-
-        // Habilitar cierre y finalización
-        batchDoneBtn.disabled = false;
-        batchCloseBtn.disabled = false;
       };
       reader.readAsText(file);
     });
+
+    async function checkActiveJob() {
+      try {
+        const response = await fetch('/artists/batch-job/active');
+        const result = await response.json();
+        if (response.ok && result.success && result.hasActiveJob) {
+          const { job } = result;
+          
+          const jobResponse = await fetch(`/artists/batch-job/${job.id}`);
+          const jobResult = await jobResponse.json();
+          if (jobResponse.ok && jobResult.success) {
+            const artistNames = jobResult.items.map(item => item.artist_name);
+            
+            batchTableBody.innerHTML = '';
+            batchCountdownContainer.innerHTML = '<span class="text-info"><i class="bi bi-info-circle me-1"></i> Tareas en segundo plano.</span> Podés cerrar esta ventana y el proceso continuará.';
+            
+            batchModal.show();
+            startPollingJob(job.id, artistNames);
+          }
+        }
+      } catch (err) {
+        console.error('Error al verificar Job activo al cargar:', err);
+      }
+    }
+
+    checkActiveJob();
 
     // Lógica para Descarga de Álbumes Faltantes
     const artistsWithoutAlbumsList = <%- JSON.stringify(artistsWithoutAlbums) %>;
@@ -823,6 +942,183 @@
         }
       });
     });
+
+    // Lógica para detección de fotos en blanco y negro (B&W) en galerías
+    const detectBwBtn = document.getElementById('detectBwPhotosBtn');
+    const bwModalEl = document.getElementById('bwPhotosModal');
+    let bwModal = null;
+    if (bwModalEl) {
+      bwModal = new bootstrap.Modal(bwModalEl);
+    }
+
+    function isImageBw(imgSrc) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = function() {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = 30;
+            canvas.height = 30;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, 30, 30);
+            const imgData = ctx.getImageData(0, 0, 30, 30).data;
+            
+            let bwPixels = 0;
+            let evaluatedPixels = 0;
+            const len = imgData.length;
+            
+            for (let i = 0; i < len; i += 4) {
+              const r = imgData[i];
+              const g = imgData[i+1];
+              const b = imgData[i+2];
+              const a = imgData[i+3];
+              
+              if (a < 10) continue; // Omitir píxeles transparentes
+              
+              evaluatedPixels++;
+              const diff = Math.max(Math.abs(r - g), Math.abs(r - b), Math.abs(g - b));
+              if (diff < 12) {
+                bwPixels++;
+              }
+            }
+            
+            if (evaluatedPixels === 0) {
+              resolve(false);
+              return;
+            }
+            
+            const bwRatio = bwPixels / evaluatedPixels;
+            resolve(bwRatio >= 0.95);
+          } catch (e) {
+            resolve(false);
+          }
+        };
+        img.onerror = function() {
+          resolve(false);
+        };
+        img.src = imgSrc;
+      });
+    }
+
+    if (detectBwBtn && bwModal) {
+      detectBwBtn.addEventListener('click', async () => {
+        const progressDiv = document.getElementById('bwAnalysisProgress');
+        const resultsDiv = document.getElementById('bwAnalysisResults');
+        const progressText = document.getElementById('bwAnalysisText');
+        const progressBar = document.getElementById('bwAnalysisBar');
+        const listContainer = document.getElementById('bwArtistsList');
+        const noMsg = document.getElementById('noBwArtistsMsg');
+
+        // Reiniciar modal y mostrar barra de progreso
+        progressDiv.style.display = 'block';
+        resultsDiv.style.display = 'none';
+        progressBar.style.width = '0%';
+        progressText.textContent = 'Obteniendo galerías de artistas...';
+        listContainer.innerHTML = '';
+        noMsg.style.display = 'none';
+
+        bwModal.show();
+
+        try {
+          const response = await fetch('/artists/galleries-list');
+          const data = await response.json();
+          if (!response.ok || !data.success) {
+            progressText.textContent = 'Error al obtener artistas de la base de datos.';
+            return;
+          }
+
+          const artists = data.artists;
+          const tasks = [];
+          artists.forEach(artist => {
+            if (artist.images && Array.isArray(artist.images)) {
+              artist.images.forEach(imgUrl => {
+                tasks.push({ artist, imgUrl });
+              });
+            }
+          });
+
+          if (tasks.length === 0) {
+            progressDiv.style.display = 'none';
+            resultsDiv.style.display = 'block';
+            noMsg.style.display = 'block';
+            return;
+          }
+
+          progressText.textContent = `Analizando 0 de ${tasks.length} imágenes...`;
+
+          let processed = 0;
+          const detectedArtists = new Map();
+          const concurrency = 6;
+          let taskIdx = 0;
+
+          const runWorker = async () => {
+            while (taskIdx < tasks.length) {
+              const currentIdx = taskIdx++;
+              if (currentIdx >= tasks.length) break;
+
+              const { artist, imgUrl } = tasks[currentIdx];
+
+              // Si ya se detectó B&W para este artista, salteamos sumando al progreso directamente
+              if (detectedArtists.has(artist.id)) {
+                processed++;
+                const percent = Math.round((processed / tasks.length) * 100);
+                progressBar.style.width = `${percent}%`;
+                progressText.textContent = `Analizando ${processed} de ${tasks.length} imágenes...`;
+                continue;
+              }
+
+              const isBw = await isImageBw(imgUrl);
+
+              if (isBw) {
+                if (!detectedArtists.has(artist.id)) {
+                  detectedArtists.set(artist.id, {
+                    id: artist.id,
+                    name: artist.name,
+                    bwImage: imgUrl
+                  });
+                }
+              }
+
+              processed++;
+              const percent = Math.round((processed / tasks.length) * 100);
+              progressBar.style.width = `${percent}%`;
+              progressText.textContent = `Analizando ${processed} de ${tasks.length} imágenes...`;
+            }
+          };
+
+          const workers = [];
+          for (let i = 0; i < Math.min(concurrency, tasks.length); i++) {
+            workers.push(runWorker());
+          }
+
+          await Promise.all(workers);
+
+          // Mostrar resultados
+          progressDiv.style.display = 'none';
+          resultsDiv.style.display = 'block';
+
+          if (detectedArtists.size === 0) {
+            noMsg.style.display = 'block';
+          } else {
+            detectedArtists.forEach(artist => {
+              const item = document.createElement('div');
+              item.className = 'list-group-item bg-transparent border-secondary border-opacity-10 px-0 d-flex justify-content-between align-items-center';
+              item.innerHTML = `
+                <div class="d-flex align-items-center gap-3">
+                  <img src="${artist.bwImage}" class="rounded border border-secondary border-opacity-25" style="width: 40px; height: 40px; object-fit: cover;" alt="${artist.name}" onerror="this.src='/img/default-artist.png'">
+                  <span class="text-white fw-medium">${artist.name}</span>
+                </div>
+                <a href="/artists/${encodeURIComponent(artist.id)}" class="btn btn-sm btn-outline-secondary">Ir al Artista</a>
+              `;
+              listContainer.appendChild(item);
+            });
+          }
+        } catch (err) {
+          console.error('Error al analizar fotos:', err);
+          progressText.textContent = 'Ocurrió un error durante el análisis de imágenes.';
+        }
+      });
+    }
   });
 </script>
 

@@ -49,6 +49,29 @@ function getArtistById(id) {
   return null;
 }
 
+// Obtener el listado de galerías de fotos de todos los artistas para análisis
+router.get('/galleries-list', (req, res) => {
+  try {
+    const artists = db.prepare('SELECT id, name, images FROM artists').all();
+    const result = artists.map(ar => {
+      let imagesList = [];
+      if (ar.images) {
+        try {
+          imagesList = JSON.parse(ar.images);
+        } catch(e) {}
+      }
+      return {
+        id: ar.id,
+        name: ar.name,
+        images: imagesList
+      };
+    });
+    res.json({ success: true, artists: result });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Detalle del artista (desde SQLite)
 router.get('/:id', (req, res) => {
   const artist = getArtistById(req.params.id);
@@ -729,6 +752,134 @@ router.post('/batch-add', async (req, res) => {
     res.json({ success: true, name: artistData.name, id: artistId });
   } catch (err) {
     logger.error(`[Batch] Error en importación batch de "${name}":`, err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Iniciar el worker al agregar nuevos jobs
+const { triggerWorker } = require('../services/importWorker');
+
+// 1. Crear e iniciar una nueva tarea de importación en lote (Job)
+router.post('/batch-import', (req, res) => {
+  const { names } = req.body;
+  if (!names || !Array.isArray(names) || names.length === 0) {
+    return res.status(400).json({ success: false, error: 'Falta la lista de nombres de artistas.' });
+  }
+
+  try {
+    // Generar un ID único para el Job
+    const jobId = 'job_' + Date.now();
+    
+    // Crear el Job en SQLite
+    db.prepare(`
+      INSERT INTO import_jobs (id, status, total_items, completed_items)
+      VALUES (?, 'pending', ?, 0)
+    `).run(jobId, names.length);
+
+    // Crear los Items individuales en SQLite
+    const insertItem = db.prepare(`
+      INSERT INTO import_items (job_id, artist_name, status)
+      VALUES (?, ?, 'pending')
+    `);
+
+    const insertItemsTransaction = db.transaction((jobId, artistNames) => {
+      for (const name of artistNames) {
+        if (name && name.trim()) {
+          insertItem.run(jobId, name.trim());
+        }
+      }
+    });
+
+    insertItemsTransaction(jobId, names);
+    logger.info(`[Batch] Creado Job de importación en segundo plano ${jobId} con ${names.length} artistas.`);
+
+    // Despertar al worker
+    triggerWorker();
+
+    res.json({ success: true, jobId });
+  } catch (err) {
+    logger.error(`[Batch] Error al crear Job de importación:`, err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Obtener el Job activo actualmente (si lo hay)
+router.get('/batch-job/active', (req, res) => {
+  try {
+    const activeJob = db.prepare(`
+      SELECT * FROM import_jobs 
+      WHERE status IN ('processing', 'pending') 
+      ORDER BY created_at ASC LIMIT 1
+    `).get();
+
+    if (activeJob) {
+      // Obtener el artista actual que se está procesando
+      const activeItem = db.prepare(`
+        SELECT artist_name FROM import_items 
+        WHERE job_id = ? AND status = 'processing' 
+        LIMIT 1
+      `).get(activeJob.id);
+
+      return res.json({ 
+        success: true, 
+        hasActiveJob: true, 
+        job: activeJob,
+        currentArtist: activeItem ? activeItem.artist_name : null
+      });
+    }
+
+    res.json({ success: true, hasActiveJob: false });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Obtener el estado detallado de un Job específico
+router.get('/batch-job/:id', (req, res) => {
+  const jobId = req.params.id;
+  try {
+    const job = db.prepare('SELECT * FROM import_jobs WHERE id = ?').get(jobId);
+    if (!job) {
+      return res.status(404).json({ success: false, error: 'Job no encontrado.' });
+    }
+
+    // Obtener los items asociados
+    const items = db.prepare('SELECT artist_name, status, error_message FROM import_items WHERE job_id = ? ORDER BY id ASC').all(jobId);
+
+    // Obtener el artista actual si se está procesando
+    const activeItem = items.find(i => i.status === 'processing');
+
+    res.json({ 
+      success: true, 
+      job, 
+      items,
+      currentArtist: activeItem ? activeItem.artist_name : null
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. Cancelar un Job de importación
+router.post('/batch-job/:id/cancel', (req, res) => {
+  const jobId = req.params.id;
+  try {
+    const job = db.prepare('SELECT * FROM import_jobs WHERE id = ?').get(jobId);
+    if (!job) {
+      return res.status(404).json({ success: false, error: 'Job no encontrado.' });
+    }
+
+    if (job.status === 'completed' || job.status === 'cancelled') {
+      return res.json({ success: true, message: 'El Job ya finalizó.' });
+    }
+
+    // Cancelar el Job y los items pendientes
+    db.prepare("UPDATE import_jobs SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(jobId);
+    db.prepare("UPDATE import_items SET status = 'failed', error_message = 'Cancelado por el usuario' WHERE job_id = ? AND status = 'pending'").run(jobId);
+
+    logger.info(`[Batch] Cancelado Job de importación ${jobId} por el usuario.`);
+    res.json({ success: true });
+  } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });

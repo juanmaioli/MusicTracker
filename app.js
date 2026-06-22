@@ -50,6 +50,10 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Inicializar Background Worker para importación en lote
+const { initWorker } = require('./services/importWorker');
+initWorker();
+
 app.listen(PORT, () => {
   console.log(`Servidor de MusicTracker corriendo en http://localhost:${PORT}`);
 });

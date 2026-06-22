@@ -114,7 +114,11 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.25.0 (Actual)
+### v1.26.0 (Actual)
+*   **⚙️ Importaciones asíncronas en segundo plano (Background Worker):** Rediseño completo de la importación masiva de artistas desde archivos de texto. El proceso se delegó a un worker en segundo plano que consume una cola transaccional en SQLite, permitiendo cerrar el modal e incluso la pestaña del navegador sin interrumpir las importaciones en curso.
+*   **🎨 Detección de fotos en blanco y negro (B&W) en galerías:** Integración de un analizador cromático en el cliente que escanea la galería de fotos locales de todos los artistas utilizando Canvas HTML5. Evalúa la saturación cromática pixel por pixel en lotes de 6 tareas paralelas a baja resolución ($30 \times 30$ px) para ahorrar memoria, y lista los artistas detectados mostrando una miniatura de la foto en escala de grises.
+
+### v1.25.0
 *   **🖼️ Borrado continuo en Lightbox:** Se modificó el comportamiento de eliminación de imágenes en el visor Lightbox; ahora no se cierra el modal, sino que avanza y renderiza de forma automática la siguiente foto disponible de la galería, ocultándose únicamente si la galería se queda completamente vacía.
 *   **🐛 Comprobación de duplicados por TXT sin acentos:** Se corrigieron las rutas `/artists/batch-check` y `/artists/batch-add` para comparar los nombres de los artistas en lote utilizando la normalización `removeAccents()`. Esto soluciona los problemas donde artistas con diferencias únicamente en marcas diacríticas (como "Andres Calamaro" y "Andrés Calamaro") no eran catalogados como duplicados.
 *   **🚩 Banderas de Egipto y Filipinas:** Se añadió soporte en `services/flagHelper.js` y en el Dashboard para traducir, mapear y visualizar las banderas de Egipto (`🇪🇬`) y Filipinas (`🇵🇭`) en las tarjetas y en el selector de filtros de países.
