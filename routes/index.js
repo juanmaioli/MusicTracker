@@ -338,4 +338,103 @@ router.post('/stats/restore', (req, res) => {
   }
 });
 
+// Ruta para escanear y trasladar fotos huérfanas
+router.post('/stats/move-orphans', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+
+  const projectRoot = path.join(__dirname, '..');
+  const artistsDir = path.join(projectRoot, 'public', 'images', 'artists');
+  const albumsDir = path.join(projectRoot, 'public', 'images', 'albums');
+  const huerfanasDir = path.join(projectRoot, 'huerfanas');
+  const huerfanasArtists = path.join(huerfanasDir, 'artists');
+  const huerfanasAlbums = path.join(huerfanasDir, 'albums');
+
+  try {
+    const dbImages = new Set();
+
+    // 1. Obtener imágenes registradas
+    const artistsRows = db.prepare('SELECT image, images FROM artists').all();
+    artistsRows.forEach(row => {
+      if (row.image) dbImages.add(row.image.trim());
+      if (row.images) {
+        try {
+          const gallery = JSON.parse(row.images);
+          if (Array.isArray(gallery)) {
+            gallery.forEach(img => {
+              if (img) dbImages.add(img.trim());
+            });
+          }
+        } catch (e) {}
+      }
+    });
+
+    const albumsRows = db.prepare('SELECT cover_image FROM albums').all();
+    albumsRows.forEach(row => {
+      if (row.cover_image && row.cover_image !== 'NO_COVER') {
+        dbImages.add(row.cover_image.trim());
+      }
+    });
+
+    // 2. Crear directorios de destino
+    fs.mkdirSync(huerfanasArtists, { recursive: true });
+    fs.mkdirSync(huerfanasAlbums, { recursive: true });
+
+    let movedArtists = 0;
+    let movedAlbums = 0;
+
+    // 3. Procesar artistas
+    if (fs.existsSync(artistsDir)) {
+      const files = fs.readdirSync(artistsDir);
+      files.forEach(filename => {
+        const filePath = path.join(artistsDir, filename);
+        if (fs.statSync(filePath).isFile()) {
+          const dbRoute = `/images/artists/${filename}`;
+          if (!dbImages.has(dbRoute)) {
+            const destPath = path.join(huerfanasArtists, filename);
+            fs.renameSync(filePath, destPath);
+            movedArtists++;
+          }
+        }
+      });
+    }
+
+    // 4. Procesar álbumes
+    if (fs.existsSync(albumsDir)) {
+      const files = fs.readdirSync(albumsDir);
+      files.forEach(filename => {
+        const filePath = path.join(albumsDir, filename);
+        if (fs.statSync(filePath).isFile()) {
+          const dbRoute = `/images/albums/${filename}`;
+          if (!dbImages.has(dbRoute)) {
+            const destPath = path.join(huerfanasAlbums, filename);
+            fs.renameSync(filePath, destPath);
+            movedAlbums++;
+          }
+        }
+      });
+    }
+
+    // 5. Limpiar si quedaron carpetas vacías
+    [huerfanasArtists, huerfanasAlbums, huerfanasDir].forEach(dirPath => {
+      try {
+        if (fs.existsSync(dirPath) && fs.readdirSync(dirPath).length === 0) {
+          fs.rmdirSync(dirPath);
+        }
+      } catch (e) {}
+    });
+
+    res.json({
+      success: true,
+      movedArtists,
+      movedAlbums,
+      totalMoved: movedArtists + movedAlbums
+    });
+
+  } catch (err) {
+    console.error('Error al mover fotos huérfanas:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;

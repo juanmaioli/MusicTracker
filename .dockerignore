@@ -1,0 +1,34 @@
+# Node.js
+node_modules/
+npm-debug.log
+
+# Base de datos y archivos locales de datos
+*.db
+*.sqlite
+logs/
+
+# Imágenes descargadas localmente (evita sobrepeso en la imagen)
+public/images/albums/
+public/images/artists/
+public/images/db_backup.json
+
+# Entorno y credenciales
+.env
+.env.*
+
+# Certificados SSL (se recomienda montarlos mediante volúmenes)
+ssl/
+
+# Herramientas de Gemini y scripts locales
+.gemini/
+brain/
+GEMINI.md
+check-*.js
+deduplicate*.js
+inspect-*.js
+plan-*.md
+
+# Configuración del editor y control de versiones
+.git/
+.gitignore
+.vscode/

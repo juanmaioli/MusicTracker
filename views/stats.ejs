@@ -285,8 +285,11 @@
                 <button class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 m-0" data-bs-toggle="modal" data-bs-target="#noPhotoArtistsModal">
                   <i class="bi bi-search"></i> Revisar
                 </button>
-                <button class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 m-0" id="detectBwPhotosBtn">
-                  <i class="bi bi-palette"></i> Fotos B&W
+                <button class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 m-0" id="detectBwPhotosBtn" title="Detectar fotos en blanco y negro">
+                  <i class="bi bi-palette"></i>B&W
+                </button><br>
+                <button class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 m-0" id="moveOrphanPhotosBtn" title="Mover fotos huérfanas del disco">
+                  <i class="bi bi-folder-symlink"></i>Huérfanas
                 </button>
           </div>
         </div>
@@ -581,8 +584,12 @@
       reader.readAsDataURL(file);
     }
 
-    restoreInput.addEventListener('change', (e) => handleRestore(e.target.files[0]));
-    restoreInputSec.addEventListener('change', (e) => handleRestore(e.target.files[0]));
+    if (restoreInput) {
+      restoreInput.addEventListener('change', (e) => handleRestore(e.target.files[0]));
+    }
+    if (restoreInputSec) {
+      restoreInputSec.addEventListener('change', (e) => handleRestore(e.target.files[0]));
+    }
 
     // Lógica de Importación en Lote (Batch con Background Worker)
     const batchInput = document.getElementById('batchFile');
@@ -1136,6 +1143,42 @@
         } catch (err) {
           console.error('Error al analizar fotos:', err);
           progressText.textContent = 'Ocurrió un error durante el análisis de imágenes.';
+        }
+      });
+    }
+
+    // Lógica para mover fotos huérfanas
+    const moveOrphansBtn = document.getElementById('moveOrphanPhotosBtn');
+    if (moveOrphansBtn) {
+      moveOrphansBtn.addEventListener('click', async () => {
+        const confirmAction = confirm('¿Querés buscar y mover todas las fotos huérfanas locales del disco a la carpeta "huerfanas"?');
+        if (!confirmAction) return;
+
+        moveOrphansBtn.disabled = true;
+        const originalHtml = moveOrphansBtn.innerHTML;
+        moveOrphansBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Moviendo...';
+
+        try {
+          const response = await fetch('/stats/move-orphans', {
+            method: 'POST',
+            headers: {
+              'Accept': 'application/json'
+            }
+          });
+
+          const result = await response.json();
+          if (response.ok && result.success) {
+            alert(`¡Completado! Se movieron un total de ${result.totalMoved} imágenes huérfanas con éxito.\n- Artistas: ${result.movedArtists}\n- Álbumes: ${result.movedAlbums}\n\nLos archivos fueron resguardados en la carpeta "huerfanas/" en la raíz de tu proyecto.`);
+            window.location.reload();
+          } else {
+            alert('Error al mover imágenes: ' + (result.error || 'Ocurrió un error inesperado.'));
+          }
+        } catch (err) {
+          console.error('Error al solicitar mover fotos huérfanas:', err);
+          alert('Error de red al intentar procesar las imágenes huérfanas.');
+        } finally {
+          moveOrphansBtn.disabled = false;
+          moveOrphansBtn.innerHTML = originalHtml;
         }
       });
     }

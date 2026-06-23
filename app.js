@@ -50,10 +50,20 @@ app.use((err, req, res, next) => {
   });
 });
 
+const https = require('https');
+const fs = require('fs');
+
 // Inicializar Background Worker para importación en lote
 const { initWorker } = require('./services/importWorker');
 initWorker();
 
-app.listen(PORT, () => {
-  console.log(`Servidor de MusicTracker corriendo en http://localhost:${PORT}`);
+// Configuración de certificados SSL
+const sslOptions = {
+  key: fs.readFileSync(path.join(__dirname, 'ssl', 'apache.key')),
+  cert: fs.readFileSync(path.join(__dirname, 'ssl', 'apache.crt'))
+};
+
+// Crear y levantar servidor HTTPS
+https.createServer(sslOptions, app).listen(PORT, () => {
+  console.log(`Servidor de MusicTracker corriendo en https://localhost:${PORT}`);
 });

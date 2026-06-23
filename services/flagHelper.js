@@ -59,7 +59,15 @@ function getFlagPath(locationStr) {
     'egypt': 'egipto',
     'egipto': 'egipto',
     'philippines': 'filipinas',
-    'filipinas': 'filipinas'
+    'filipinas': 'filipinas',
+    'moldova': 'moldavia',
+    'republica de moldavia': 'moldavia',
+    'democratic republic of the congo': 'congord',
+    'republica democratica del congo': 'congord',
+    'drc': 'congord',
+    'rd congo': 'congord',
+    'republic of the congo': 'congo',
+    'republica del congo': 'congo'
   };
 
   for (const [key, val] of Object.entries(termMap)) {

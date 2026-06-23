@@ -114,7 +114,13 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.27.0 (Actual)
+### v1.28.0 (Actual)
+*   **🔒 Servidor HTTPS Nativo:** Integración de certificados SSL (`apache.key` y `apache.crt`) en el inicio de la aplicación en `app.js` usando los módulos nativos `https` y `fs` de Node.js, para servir la plataforma de forma segura a través de `https://localhost:3000`.
+*   **📂 Depuración y Traslado de Fotos Huérfanas:** Implementación de un botón "Mover Huérfanas" en la interfaz de estadísticas y una ruta backend `POST /stats/move-orphans`. Escanea los directorios locales de imágenes y traslada aquellos archivos sin correspondencia en la base de datos de SQLite a una carpeta de resguardo `/huerfanas/` en la raíz del proyecto sin eliminarlos.
+*   **🏳️ Catálogo de Banderas y Países Enriquecido:** Se añadieron más de 45 países y banderas emojis unicode al dropdown del Dashboard. Además, se configuraron sinónimos en el backend (`services/flagHelper.js`) para Moldavia, Congo y República Democrática del Congo (DRC) para evitar banderas vacías.
+*   **🐛 Corrección de Bloqueo de Scripts en Estadísticas:** Se validó la existencia de los inputs de restauración (`restoreInput`) antes de asignarles event listeners, solucionando un fallo por `TypeError` en el DOM que impedía que otros botones (como "Fotos B&W") funcionaran en el cliente.
+
+### v1.27.0
 *   **⌨️ Atajo de teclado para eliminar imágenes en el Lightbox:** Permite borrar la foto actual de la galería al presionar la tecla `d` o `D` con el visor de fotos abierto, previniendo la acción si el foco está en un campo de texto para mayor seguridad y accesibilidad.
 *   **📐 Alineación y centrado de botones en estadísticas:** Optimización de la interfaz en la sección de Mantenimiento de Datos de la vista de estadísticas. Se corrigieron los paddings rotos (de `-3` a `p-3`), y se alinearon vertical (`align-items-center`) e hicieron centrado horizontal (`justify-content-center`) de todos los botones de acción para un acabado visual homogéneo.
 
