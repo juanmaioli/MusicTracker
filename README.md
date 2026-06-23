@@ -114,8 +114,12 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.26.0 (Actual)
-*   **⚙️ Importaciones asíncronas en segundo plano (Background Worker):** Rediseño completo de la importación masiva de artistas desde archivos de texto. El proceso se delegó a un worker en segundo plano que consume una cola transaccional en SQLite, permitiendo cerrar el modal e incluso la pestaña del navegador sin interrumpir las importaciones en curso.
+### v1.27.0 (Actual)
+*   **⌨️ Atajo de teclado para eliminar imágenes en el Lightbox:** Permite borrar la foto actual de la galería al presionar la tecla `d` o `D` con el visor de fotos abierto, previniendo la acción si el foco está en un campo de texto para mayor seguridad y accesibilidad.
+*   **📐 Alineación y centrado de botones en estadísticas:** Optimización de la interfaz en la sección de Mantenimiento de Datos de la vista de estadísticas. Se corrigieron los paddings rotos (de `-3` a `p-3`), y se alinearon vertical (`align-items-center`) e hicieron centrado horizontal (`justify-content-center`) de todos los botones de acción para un acabado visual homogéneo.
+
+### v1.26.0
+*   **⚙️ Importaciones asíncronas en segundo plano (Background Worker):** Incremento de la versión MINOR. Rediseño completo de la importación masiva de artistas desde archivos de texto. El proceso se delegó a un worker en segundo plano que consume una cola transaccional en SQLite, permitiendo cerrar el modal e incluso la pestaña del navegador sin interrumpir las importaciones en curso.
 *   **🎨 Detección de fotos en blanco y negro (B&W) en galerías:** Integración de un analizador cromático en el cliente que escanea la galería de fotos locales de todos los artistas utilizando Canvas HTML5. Evalúa la saturación cromática pixel por pixel en lotes de 6 tareas paralelas a baja resolución ($30 \times 30$ px) para ahorrar memoria, y lista los artistas detectados mostrando una miniatura de la foto en escala de grises.
 
 ### v1.25.0

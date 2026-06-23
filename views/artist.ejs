@@ -877,6 +877,12 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
         navigateLightbox(-1);
+      } else if (e.key.toLowerCase() === 'd') {
+        const activeTag = document.activeElement ? document.activeElement.tagName : '';
+        if (activeTag !== 'INPUT' && activeTag !== 'TEXTAREA') {
+          e.preventDefault();
+          deleteArtistImage();
+        }
       }
     }
   });
