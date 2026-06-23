@@ -114,7 +114,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.28.0 (Actual)
+### v1.28.1 (Actual)
+*   **🎨 Ordenamiento Alfabético en Fotos Blanco y Negro:** Se ordenaron alfabéticamente por nombre de artista los resultados obtenidos en el análisis cromático de fotos en blanco y negro, mejorando la legibilidad y la experiencia de usuario en la pantalla de estadísticas.
+
+### v1.28.0
 *   **🔒 Servidor HTTPS Nativo:** Integración de certificados SSL (`apache.key` y `apache.crt`) en el inicio de la aplicación en `app.js` usando los módulos nativos `https` y `fs` de Node.js, para servir la plataforma de forma segura a través de `https://localhost:3000`.
 *   **📂 Depuración y Traslado de Fotos Huérfanas:** Implementación de un botón "Mover Huérfanas" en la interfaz de estadísticas y una ruta backend `POST /stats/move-orphans`. Escanea los directorios locales de imágenes y traslada aquellos archivos sin correspondencia en la base de datos de SQLite a una carpeta de resguardo `/huerfanas/` en la raíz del proyecto sin eliminarlos.
 *   **🏳️ Catálogo de Banderas y Países Enriquecido:** Se añadieron más de 45 países y banderas emojis unicode al dropdown del Dashboard. Además, se configuraron sinónimos en el backend (`services/flagHelper.js`) para Moldavia, Congo y República Democrática del Congo (DRC) para evitar banderas vacías.

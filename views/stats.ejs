@@ -1127,7 +1127,8 @@
           if (detectedArtists.size === 0) {
             noMsg.style.display = 'block';
           } else {
-            detectedArtists.forEach(artist => {
+            const sortedArtists = Array.from(detectedArtists.values()).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+            sortedArtists.forEach(artist => {
               const item = document.createElement('div');
               item.className = 'list-group-item bg-transparent border-secondary border-opacity-10 px-0 d-flex justify-content-between align-items-center';
               item.innerHTML = `
