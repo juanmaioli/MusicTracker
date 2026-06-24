@@ -114,7 +114,11 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.28.2 (Actual)
+### v1.29.0 (Actual)
+*   **🏷️ Modal de Artistas por Género y Top 10:** Ampliación a 10 géneros populares y agregado de modal interactivo que consulta vía API AJAX los artistas correspondientes, ordenados alfabéticamente.
+*   **📊 Nuevas Métricas Avanzadas:** Cálculo del promedio de álbumes por artista, tasa de canciones favoritas y detección dinámica del año dorado y del artista más coleccionado.
+
+### v1.28.2
 *   **📐 Optimización y Proporción de Tarjetas en Estadísticas:** Se reestructuraron los botones de mantenimiento de datos para ordenarse verticalmente y abarcar el 100% de su contenedor. Asimismo, se unificaron las proporciones asignando un ancho idéntico del 20% a cada tarjeta (`col-12 col-lg`) de forma responsiva.
 *   **📂 Exclusión de Imágenes Huérfanas:** Se añadió la carpeta local `huerfanas/` al archivo `.gitignore` para prevenir la subida accidental de imágenes locales de descarte en el control de versiones.
 

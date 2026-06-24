@@ -93,6 +93,31 @@ router.get('/stats', (req, res) => {
       totalDurationStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
     }
 
+    // Métricas extras
+    const avgAlbumsPerArtist = totalArtists > 0 ? (totalAlbums / totalArtists).toFixed(1) : '0.0';
+    
+    const topArtistRes = db.prepare(`
+      SELECT ar.name, COUNT(al.id) AS album_count
+      FROM artists ar
+      JOIN albums al ON ar.id = al.artist_id
+      GROUP BY ar.id
+      ORDER BY album_count DESC, ar.name ASC
+      LIMIT 1
+    `).get();
+    const topArtistName = topArtistRes ? `${topArtistRes.name} (${topArtistRes.album_count} álb.)` : 'N/A';
+
+    const goldenYearRes = db.prepare(`
+      SELECT release_year, COUNT(*) AS count
+      FROM albums
+      WHERE release_year IS NOT NULL AND release_year > 0
+      GROUP BY release_year
+      ORDER BY count DESC, release_year DESC
+      LIMIT 1
+    `).get();
+    const goldenYear = goldenYearRes ? `${goldenYearRes.release_year} (${goldenYearRes.count} álb.)` : 'N/A';
+
+    const favoriteRate = totalTracks > 0 ? ((totalFavorites / totalTracks) * 100).toFixed(1) + '%' : '0.0%';
+
     // 2. Top 5 álbumes mejor calificados
     const topAlbums = db.prepare(`
       SELECT al.title, al.user_rating, al.release_year, ar.name AS artist_name
@@ -114,7 +139,7 @@ router.get('/stats', (req, res) => {
       ORDER BY decade DESC
     `).all();
 
-    // 4. Top 5 géneros
+    // 4. Top 10 géneros
     const artistsGenres = db.prepare('SELECT genres FROM artists').all();
     const genreCounts = {};
     artistsGenres.forEach(row => {
@@ -130,7 +155,7 @@ router.get('/stats', (req, res) => {
     });
     const topGenres = Object.entries(genreCounts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
+      .slice(0, 10)
       .map(entry => ({ name: entry[0], count: entry[1] }));
 
     // 5. Artistas sin álbumes
@@ -163,7 +188,11 @@ router.get('/stats', (req, res) => {
       decades,
       topGenres,
       artistsWithoutAlbums,
-      artistsWithoutPhotos
+      artistsWithoutPhotos,
+      avgAlbumsPerArtist,
+      topArtistName,
+      goldenYear,
+      favoriteRate
     });
   } catch (err) {
     console.error('Error al cargar estadísticas:', err);
@@ -437,4 +466,27 @@ router.post('/stats/move-orphans', (req, res) => {
   }
 });
 
+// Obtener artistas de un género ordenados alfabéticamente
+router.get('/stats/genres/:genre/artists', (req, res) => {
+  try {
+    const genreToFind = req.params.genre.toLowerCase();
+    const allArtists = db.prepare('SELECT id, name, image, genres FROM artists').all();
+    const artistsWithGenre = allArtists.filter(artist => {
+      if (!artist.genres) return false;
+      try {
+        const parsed = JSON.parse(artist.genres);
+        return parsed.map(g => g.toLowerCase()).includes(genreToFind);
+      } catch (e) {
+        return false;
+      }
+    }).sort((a, b) => a.name.localeCompare(b.name, 'es'));
+
+    res.json({ success: true, artists: artistsWithGenre });
+  } catch (err) {
+    console.error('Error al obtener artistas por género:', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 module.exports = router;
+
