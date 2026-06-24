@@ -114,7 +114,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.29.1 (Actual)
+### v1.30.0 (Actual)
+*   **⏳ Lazy Loading On-Demand de Artistas en Inicio:** Implementación de paginación progresiva del lado del cliente mediante `IntersectionObserver`. Carga y muestra los artistas en lotes de 24 elementos para mejorar el rendimiento de renderizado inicial de la página principal. Al filtrar por búsqueda, países o letras, la paginación progresiva se desactiva temporalmente para no afectar las consultas en tiempo real.
+
+### v1.29.1
 *   **✍️ Edición de Biografía e Integración Visual:** Agregado de un botón rectangular "Editar Biografía" y del modal de edición `#editBioModal` conectado al backend. Se eliminó el bloque de fondo translúcido y bordes de la Ficha Técnica para integrarla directamente a la columna lateral de forma sobria, unificando el estilo de los botones de acción del artista.
 
 ### v1.29.0

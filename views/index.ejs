@@ -96,6 +96,8 @@
             </a>
           <% }) %>
         </div>
+        <!-- Centinela para Lazy Loading On-Demand -->
+        <div id="lazySentinel" style="height: 10px; width: 100%;"></div>
       <% } %>
     </div>
   </div>
@@ -536,6 +538,11 @@
     function filterArtists() {
       const query = filterInput ? filterInput.value.toLowerCase().trim() : '';
       const selectedCountry = countryFilter ? countryFilter.value : '';
+      
+      if (query || selectedCountry) {
+        revealAllLazyArtists();
+      }
+      
       let visibleCount = 0;
 
       const cleanQuery = cleanText(query);
@@ -637,6 +644,7 @@
     document.querySelectorAll('.alphabet-indicator').forEach(indicator => {
       indicator.addEventListener('click', (e) => {
         e.preventDefault();
+        revealAllLazyArtists();
         const letter = indicator.getAttribute('data-letter');
         const letterCard = document.querySelector(`.letter-card-item[data-letter="${letter}"]:not(.d-none)`);
         const targetItem = letterCard || Array.from(artistItems).find(item => {
@@ -666,6 +674,71 @@
     }
     if (countryFilter) {
       countryFilter.addEventListener('change', filterArtists);
+    }
+
+    // === LÓGICA DE LAZY LOADING ON-DEMAND ===
+    const LAZY_LIMIT = 32;
+    const allGridItems = Array.from(document.querySelectorAll('.artist-grid-item, .letter-card-item'));
+    
+    let lazyArtistCount = 0;
+    allGridItems.forEach(item => {
+      if (item.classList.contains('artist-grid-item')) {
+        lazyArtistCount++;
+        if (lazyArtistCount > LAZY_LIMIT) {
+          item.classList.add('lazy-hidden', 'd-none');
+        }
+      } else if (item.classList.contains('letter-card-item')) {
+        if (lazyArtistCount >= LAZY_LIMIT) {
+          item.classList.add('lazy-hidden', 'd-none');
+        }
+      }
+    });
+
+    function revealAllLazyArtists() {
+      document.querySelectorAll('.lazy-hidden').forEach(item => {
+        item.classList.remove('lazy-hidden');
+        const query = filterInput ? filterInput.value.trim() : '';
+        const selectedCountry = countryFilter ? countryFilter.value : '';
+        if (!query && !selectedCountry) {
+          item.classList.remove('d-none');
+        }
+      });
+      updateAlphabetState();
+    }
+
+    function loadMoreArtists(count = 24) {
+      const hiddenItems = document.querySelectorAll('.lazy-hidden');
+      if (hiddenItems.length === 0) return;
+
+      let revealedArtists = 0;
+      for (let i = 0; i < hiddenItems.length; i++) {
+        const item = hiddenItems[i];
+        item.classList.remove('lazy-hidden');
+        
+        const query = filterInput ? filterInput.value.trim() : '';
+        const selectedCountry = countryFilter ? countryFilter.value : '';
+        if (!query && !selectedCountry) {
+          item.classList.remove('d-none');
+        }
+
+        if (item.classList.contains('artist-grid-item')) {
+          revealedArtists++;
+          if (revealedArtists >= count) break;
+        }
+      }
+      updateAlphabetState();
+    }
+
+    const sentinel = document.getElementById('lazySentinel');
+    if (sentinel) {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            loadMoreArtists(24);
+          }
+        });
+      }, { rootMargin: '200px' });
+      observer.observe(sentinel);
     }
   });
 </script>
