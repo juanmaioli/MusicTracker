@@ -8,3 +8,4 @@ logs/
 public/images/db_backup.json
 database.sqlite
 ssl/
+huerfanas/

@@ -114,7 +114,11 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.28.1 (Actual)
+### v1.28.2 (Actual)
+*   **📐 Optimización y Proporción de Tarjetas en Estadísticas:** Se reestructuraron los botones de mantenimiento de datos para ordenarse verticalmente y abarcar el 100% de su contenedor. Asimismo, se unificaron las proporciones asignando un ancho idéntico del 20% a cada tarjeta (`col-12 col-lg`) de forma responsiva.
+*   **📂 Exclusión de Imágenes Huérfanas:** Se añadió la carpeta local `huerfanas/` al archivo `.gitignore` para prevenir la subida accidental de imágenes locales de descarte en el control de versiones.
+
+### v1.28.1
 *   **🎨 Ordenamiento Alfabético en Fotos Blanco y Negro:** Se ordenaron alfabéticamente por nombre de artista los resultados obtenidos en el análisis cromático de fotos en blanco y negro, mejorando la legibilidad y la experiencia de usuario en la pantalla de estadísticas.
 
 ### v1.28.0

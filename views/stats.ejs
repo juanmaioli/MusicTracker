@@ -175,7 +175,7 @@
       </h2>
             <div class="row g-3">
         <!-- Tarjeta de Descargar Backup -->
-        <div class="col-12 col-md-6 col-xl">
+        <div class="col-12 col-lg">
           <div class="p-3 rounded-4 d-flex align-items-start gap-3 h-100">
             <div class="bg-danger bg-opacity-10 p-2.5 rounded-3 text-danger fs-4">
               <i class="bi bi-cloud-arrow-down-fill"></i>
@@ -183,12 +183,11 @@
             <div>
               <h3 class="h6 fw-bold text-white mb-1">Exportar Copia</h3>
               <p class="text-secondary small mb-3">Generá y descargá un archivo comprimido .tar.gz con toda tu colección y sus imágenes locales.</p>
-
             </div>
           </div>
         </div>
         <!-- Tarjeta de Restaurar Backup -->
-        <div class="col-12 col-md-6 col-xl">
+        <div class="col-12 col-lg">
           <div class="p-3 rounded-4 d-flex align-items-start gap-3 h-100">
             <div class="bg-warning bg-opacity-10 p-2.5 rounded-3 text-warning fs-4">
               <i class="bi bi-cloud-arrow-up-fill"></i>
@@ -200,7 +199,7 @@
           </div>
         </div>
         <!-- Tarjeta de Importación Batch TXT -->
-        <div class="col-12 col-md-6 col-xl">
+        <div class="col-12 col-lg">
           <div class="p-3 rounded-4 d-flex align-items-start gap-3 h-100">
             <div class="bg-info bg-opacity-10 p-2.5 rounded-3 text-info fs-4">
               <i class="bi bi-file-earmark-text-fill"></i>
@@ -212,7 +211,7 @@
           </div>
         </div>
         <!-- Tarjeta de Artistas sin Álbumes -->
-        <div class="col-12 col-md-6 col-xl">
+        <div class="col-12 col-lg">
           <div class="p-3 rounded-4 d-flex align-items-start gap-3 h-100">
             <div class="bg-secondary bg-opacity-10 p-2.5 rounded-3 text-secondary fs-4">
               <i class="bi bi-person-x-fill"></i>
@@ -220,12 +219,11 @@
             <div>
               <h3 class="h6 fw-bold text-white mb-1">Sin Álbumes</h3>
               <p class="text-secondary small mb-3">Tenés <span class="text-white fw-bold"><%= artistsWithoutAlbums.length %></span> artistas vacíos.</p>
-
             </div>
           </div>
         </div>
         <!-- Tarjeta de Artistas sin Fotos -->
-        <div class="col-12 col-md-6 col-xl">
+        <div class="col-12 col-lg">
           <div class="p-3 rounded-4 d-flex align-items-start gap-3 h-100">
             <div class="bg-success bg-opacity-10 p-2.5 rounded-3 text-success fs-4">
               <i class="bi bi-image"></i>
@@ -233,7 +231,6 @@
             <div>
               <h3 class="h6 fw-bold text-white mb-1">Sin Fotos</h3>
               <p class="text-secondary small mb-3">Tenés <span class="text-white fw-bold"><%= artistsWithoutPhotos.length %></span> artistas sin fotos.</p>
-
             </div>
           </div>
         </div>
@@ -241,55 +238,55 @@
       
       <div class="row g-3">
         <!-- Tarjeta de Descargar Backup -->
-        <div class="col-12 col-md-6 col-xl">
-          <div class="p-3 rounded-4 d-flex align-items-center justify-content-center gap-2 h-100">
-              <a href="/stats/backup" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 m-0">
+        <div class="col-12 col-lg">
+          <div class="p-3 rounded-4 d-flex flex-column align-items-stretch justify-content-center gap-2 h-100">
+              <a href="/stats/backup" class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center gap-1 m-0 w-100">
                 <i class="bi bi-download"></i> Descargar tar.gz
               </a>
           </div>
         </div>
         <!-- Tarjeta de Restaurar Backup -->
-        <div class="col-12 col-md-6 col-xl">
-          <div class="p-3 rounded-4 d-flex align-items-center justify-content-center gap-2 h-100">
-              <label for="restoreFileSecondary" class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 m-0 cursor-pointer">
+        <div class="col-12 col-lg">
+          <div class="p-3 rounded-4 d-flex flex-column align-items-stretch justify-content-center gap-2 h-100">
+              <label for="restoreFileSecondary" class="btn btn-sm btn-outline-warning d-inline-flex align-items-center justify-content-center gap-1 m-0 cursor-pointer w-100">
                 <i class="bi bi-upload"></i> Seleccionar y Restaurar
               </label>
               <input type="file" id="restoreFileSecondary" accept=".tar.gz" class="d-none">
           </div>
         </div>
         <!-- Tarjeta de Importación Batch TXT -->
-        <div class="col-12 col-md-6 col-xl">
-          <div class="p-3 rounded-4 d-flex align-items-center justify-content-center gap-2 h-100">
-              <label for="batchFile" class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 m-0 cursor-pointer">
+        <div class="col-12 col-lg">
+          <div class="p-3 rounded-4 d-flex flex-column align-items-stretch justify-content-center gap-2 h-100">
+              <label for="batchFile" class="btn btn-sm btn-outline-info d-inline-flex align-items-center justify-content-center gap-1 m-0 cursor-pointer w-100">
                 <i class="bi bi-file-plus"></i> Seleccionar TXT
               </label>
               <input type="file" id="batchFile" accept=".txt" class="d-none">
           </div>
         </div>
         <!-- Tarjeta de Artistas sin Álbumes -->
-        <div class="col-12 col-md-6 col-xl">
-          <div class="p-3 rounded-4 d-flex align-items-center justify-content-center gap-2 h-100">
-              <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1 m-0" data-bs-toggle="modal" data-bs-target="#emptyArtistsModal">
+        <div class="col-12 col-lg">
+          <div class="p-3 rounded-4 d-flex flex-column align-items-stretch justify-content-center gap-2 h-100">
+              <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center justify-content-center gap-1 m-0 w-100" data-bs-toggle="modal" data-bs-target="#emptyArtistsModal">
                 <i class="bi bi-search"></i> Revisar
               </button>
               <% if (artistsWithoutAlbums.length > 0) { %>
-                <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1 m-0" id="downloadAllMissingBtn" title="Descargar álbumes faltantes de todos los artistas">
+                <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center justify-content-center gap-1 m-0 w-100" id="downloadAllMissingBtn" title="Descargar álbumes faltantes de todos los artistas">
                   <i class="bi bi-download"></i> Descargar
                 </button>
               <% } %>
           </div>
         </div>
         <!-- Tarjeta de Artistas sin Fotos -->
-        <div class="col-12 col-md-6 col-xl">
-          <div class="p-3 rounded-4 d-flex align-items-center justify-content-center gap-2 h-100">
-                <button class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 m-0" data-bs-toggle="modal" data-bs-target="#noPhotoArtistsModal">
+        <div class="col-12 col-lg">
+          <div class="p-3 rounded-4 d-flex flex-column align-items-stretch justify-content-center gap-2 h-100">
+                <button class="btn btn-sm btn-outline-success d-inline-flex align-items-center justify-content-center gap-1 m-0 w-100" data-bs-toggle="modal" data-bs-target="#noPhotoArtistsModal">
                   <i class="bi bi-search"></i> Revisar
                 </button>
-                <button class="btn btn-sm btn-outline-info d-inline-flex align-items-center gap-1 m-0" id="detectBwPhotosBtn" title="Detectar fotos en blanco y negro">
-                  <i class="bi bi-palette"></i>B&W
-                </button><br>
-                <button class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 m-0" id="moveOrphanPhotosBtn" title="Mover fotos huérfanas del disco">
-                  <i class="bi bi-folder-symlink"></i>Huérfanas
+                <button class="btn btn-sm btn-outline-info d-inline-flex align-items-center justify-content-center gap-1 m-0 w-100" id="detectBwPhotosBtn" title="Detectar fotos en blanco y negro">
+                  <i class="bi bi-palette"></i> B&W
+                </button>
+                <button class="btn btn-sm btn-outline-warning d-inline-flex align-items-center justify-content-center gap-1 m-0 w-100" id="moveOrphanPhotosBtn" title="Mover fotos huérfanas del disco">
+                  <i class="bi bi-folder-symlink"></i> Huérfanas
                 </button>
           </div>
         </div>
