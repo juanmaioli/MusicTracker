@@ -114,7 +114,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.29.0 (Actual)
+### v1.29.1 (Actual)
+*   **✍️ Edición de Biografía e Integración Visual:** Agregado de un botón rectangular "Editar Biografía" y del modal de edición `#editBioModal` conectado al backend. Se eliminó el bloque de fondo translúcido y bordes de la Ficha Técnica para integrarla directamente a la columna lateral de forma sobria, unificando el estilo de los botones de acción del artista.
+
+### v1.29.0
 *   **🏷️ Modal de Artistas por Género y Top 10:** Ampliación a 10 géneros populares y agregado de modal interactivo que consulta vía API AJAX los artistas correspondientes, ordenados alfabéticamente.
 *   **📊 Nuevas Métricas Avanzadas:** Cálculo del promedio de álbumes por artista, tasa de canciones favoritas y detección dinámica del año dorado y del artista más coleccionado.
 

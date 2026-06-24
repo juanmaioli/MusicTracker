@@ -99,7 +99,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
         <% }) %>
       </div>
 
-      <div class="mb-3 mt-3 text-start bg-dark bg-opacity-25 p-3 rounded-3 border border-secondary border-opacity-10">
+      <div class="mb-3 mt-3 text-start">
         <div class="d-flex flex-column gap-2" id="metadataList" style="font-size: 0.85rem;">
           <% if (!hasMetadata) { %>
             <p id="noMetadataPlaceholder" class="text-secondary small m-0 text-center py-2">Ficha técnica vacía.</p>
@@ -142,7 +142,7 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
           <% } %>
         </div>
         
-        <button type="button" class="btn btn-sm btn-outline-danger w-100 mt-3 rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#editMetadataModal">
+        <button type="button" class="btn btn-outline-danger w-100 btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#editMetadataModal">
           <i class="bi bi-pencil-square me-1"></i> Editar Ficha
         </button>
       </div>
@@ -166,6 +166,9 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
             </a>
           <% } %>
         </div>
+        <button type="button" class="btn btn-outline-danger w-100 btn-sm mt-3" data-bs-toggle="modal" data-bs-target="#editBioModal">
+          <i class="bi bi-pencil-square me-1"></i> Editar Biografía
+        </button>
       </div>
 
 
@@ -1281,6 +1284,32 @@ const hasMetadata = Object.keys(artistMetadata).length > 0;
         <div class="modal-footer border-top border-secondary border-opacity-10 py-3">
           <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
           <button type="submit" class="btn btn-danger rounded-pill px-4" id="saveMetadataBtn">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para Editar Biografía -->
+<div class="modal fade" id="editBioModal" tabindex="-1" aria-labelledby="editBioModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark border-secondary border-opacity-25 rounded-4 shadow-lg text-white">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 py-3">
+        <h5 class="modal-title fw-bold" id="editBioModalLabel">
+          <i class="bi bi-pencil-square text-danger me-2"></i>Editar Biografía
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <form action="/artists/<%= encodeURIComponent(artist.id) %>/notes" method="POST">
+        <div class="modal-body p-4">
+          <div class="mb-3">
+            <label for="textareaNotes" class="form-label text-secondary fw-semibold small">Texto de la Biografía / Notas</label>
+            <textarea class="form-control bg-black bg-opacity-50 text-white border-secondary border-opacity-25" id="textareaNotes" name="notes" rows="12" placeholder="Escribí aquí la biografía del artista..."><%= artist.notes || '' %></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary border-opacity-10 py-3">
+          <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger rounded-pill px-4">Guardar Cambios</button>
         </div>
       </form>
     </div>
