@@ -75,6 +75,36 @@
 
 ---
 
+## 🐳 Ejecución con Docker
+
+Para compilar y ejecutar la aplicación de forma rápida mediante **Docker** y **Docker Compose**, seguí estos pasos:
+
+1. **Asegurarse de tener Docker instalado:**
+   Debés contar con Docker y Docker Compose instalados en tu sistema operativo.
+
+2. **Compilar y levantar los contenedores:**
+   Ejecutá el siguiente comando en la raíz del proyecto para iniciar la compilación de la imagen y levantar los servicios en segundo plano:
+   ```bash
+   docker compose up -d --build
+   ```
+
+3. **Verificar el estado del contenedor:**
+   Podés monitorear los logs de arranque del contenedor con:
+   ```bash
+   docker compose logs -f app
+   ```
+
+4. **Acceder a la aplicación:**
+   Ingresá a `http://localhost:3000` desde tu navegador.
+
+5. **Apagar y limpiar recursos:**
+   Para detener los contenedores sin borrar los datos persistentes de la base de datos ni las imágenes, utilizá:
+   ```bash
+   docker compose down
+   ```
+
+---
+
 ## 🗄️ Esquema de la Base de Datos
 
 ```mermaid
@@ -114,7 +144,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.30.0 (Actual)
+### v1.31.0 (Actual)
+*   **🐳 Dockerización y Docker Compose:** Creación de `Dockerfile` utilizando `node:22-alpine` y `compose.yml` con límites de recursos (0.5 CPU, 512 MB de RAM). Se configuró el montaje de volúmenes para la persistencia de la base de datos SQLite (`musictracker.db`), la carpeta de imágenes públicas locales y el directorio de imágenes descantadas (`huerfanas/`). También se mapeó el directorio de certificados locales (`ssl/`) permitiendo la ejecución HTTPS nativa segura dentro del contenedor de Docker.
+
+### v1.30.0
 *   **⏳ Lazy Loading On-Demand de Artistas en Inicio:** Implementación de paginación progresiva del lado del cliente mediante `IntersectionObserver`. Carga y muestra los artistas en lotes de 24 elementos para mejorar el rendimiento de renderizado inicial de la página principal. Al filtrar por búsqueda, países o letras, la paginación progresiva se desactiva temporalmente para no afectar las consultas en tiempo real.
 
 ### v1.29.1

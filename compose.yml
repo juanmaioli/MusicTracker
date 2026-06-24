@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    volumes:
+      - ./musictracker.db:/app/musictracker.db
+      - ./public/images:/app/public/images
+      - ./ssl:/app/ssl
+      - ./huerfanas:/app/huerfanas
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+    restart: unless-stopped
