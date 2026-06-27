@@ -144,8 +144,11 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.31.0 (Actual)
-*   **🐳 Dockerización y Docker Compose:** Creación de `Dockerfile` utilizando `node:22-alpine` y `compose.yml` con límites de recursos (0.5 CPU, 512 MB de RAM). Se configuró el montaje de volúmenes para la persistencia de la base de datos SQLite (`musictracker.db`), la carpeta de imágenes públicas locales y el directorio de imágenes descantadas (`huerfanas/`). También se mapeó el directorio de certificados locales (`ssl/`) permitiendo la ejecución HTTPS nativa segura dentro del contenedor de Docker.
+### v1.31.1 (Actual)
+*   **📁 Reubicación de Carpeta de Imágenes Huérfanas:** Se trasladó la carpeta `huerfanas/` a dentro de `./public/images/huerfanas/` para centralizar todos los recursos estáticos. Se actualizaron las referencias en el backend (`routes/index.js`), los mensajes informativos en la vista de estadísticas (`views/stats.ejs`), las reglas de exclusión en `.gitignore` y se eliminó el montaje de volumen innecesario en `compose.yml`.
+
+### v1.31.0
+*   **🐳 Dockerización y Docker Compose:** Creación de `Dockerfile` utilizando `node:22-alpine` y `compose.yml` con límites de recursos (0.5 CPU, 512 MB de RAM). Se configuró el montaje de volúmenes para la persistencia de la base de datos SQLite (`musictracker.db`), la carpeta de imágenes públicas locales y el directorio de imágenes de descarte (`public/images/huerfanas/`). También se mapeó el directorio de certificados locales (`ssl/`) permitiendo la ejecución HTTPS nativa segura dentro del contenedor de Docker.
 
 ### v1.30.0
 *   **⏳ Lazy Loading On-Demand de Artistas en Inicio:** Implementación de paginación progresiva del lado del cliente mediante `IntersectionObserver`. Carga y muestra los artistas en lotes de 24 elementos para mejorar el rendimiento de renderizado inicial de la página principal. Al filtrar por búsqueda, países o letras, la paginación progresiva se desactiva temporalmente para no afectar las consultas en tiempo real.

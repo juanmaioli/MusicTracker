@@ -375,7 +375,7 @@ router.post('/stats/move-orphans', (req, res) => {
   const projectRoot = path.join(__dirname, '..');
   const artistsDir = path.join(projectRoot, 'public', 'images', 'artists');
   const albumsDir = path.join(projectRoot, 'public', 'images', 'albums');
-  const huerfanasDir = path.join(projectRoot, 'huerfanas');
+  const huerfanasDir = path.join(projectRoot, 'public', 'images', 'huerfanas');
   const huerfanasArtists = path.join(huerfanasDir, 'artists');
   const huerfanasAlbums = path.join(huerfanasDir, 'albums');
 

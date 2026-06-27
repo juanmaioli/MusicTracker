@@ -9,7 +9,6 @@ services:
       - ./musictracker.db:/app/musictracker.db
       - ./public/images:/app/public/images
       - ./ssl:/app/ssl
-      - ./huerfanas:/app/huerfanas
     deploy:
       resources:
         limits:

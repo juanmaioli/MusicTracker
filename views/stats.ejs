@@ -1260,7 +1260,7 @@
     const moveOrphansBtn = document.getElementById('moveOrphanPhotosBtn');
     if (moveOrphansBtn) {
       moveOrphansBtn.addEventListener('click', async () => {
-        const confirmAction = confirm('¿Querés buscar y mover todas las fotos huérfanas locales del disco a la carpeta "huerfanas"?');
+        const confirmAction = confirm('¿Querés buscar y mover todas las fotos huérfanas locales del disco a la carpeta "public/images/huerfanas"?');
         if (!confirmAction) return;
 
         moveOrphansBtn.disabled = true;
@@ -1277,7 +1277,7 @@
 
           const result = await response.json();
           if (response.ok && result.success) {
-            alert(`¡Completado! Se movieron un total de ${result.totalMoved} imágenes huérfanas con éxito.\n- Artistas: ${result.movedArtists}\n- Álbumes: ${result.movedAlbums}\n\nLos archivos fueron resguardados en la carpeta "huerfanas/" en la raíz de tu proyecto.`);
+            alert(`¡Completado! Se movieron un total de ${result.totalMoved} imágenes huérfanas con éxito.\n- Artistas: ${result.movedArtists}\n- Álbumes: ${result.movedAlbums}\n\nLos archivos fueron resguardados en la carpeta "public/images/huerfanas/".`);
             window.location.reload();
           } else {
             alert('Error al mover imágenes: ' + (result.error || 'Ocurrió un error inesperado.'));
