@@ -78,7 +78,7 @@
         </li>
         <li class="list-group-item bg-transparent text-white border-secondary border-opacity-10 px-0 d-flex justify-content-between align-items-center">
           <span class="text-secondary">Artista más coleccionado:</span>
-          <span class="fw-semibold text-truncate ms-2" style="max-width: 180px;" title="<%= topArtistName %>"><%= topArtistName %></span>
+          <a href="#" id="openTopCollectedBtn" class="fw-semibold text-truncate text-danger text-decoration-none ms-2 d-inline-block" style="max-width: 180px;" title="Ver top 10 de artistas más coleccionados"><%= topArtistName %></a>
         </li>
         <li class="list-group-item bg-transparent text-white border-secondary border-opacity-10 px-0 d-flex justify-content-between align-items-center">
           <span class="text-secondary">Año dorado:</span>
@@ -463,6 +463,45 @@
             <% }) %>
           </div>
         <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Top 10 Artistas Más Coleccionados -->
+<div class="modal fade" id="topCollectedModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content bg-dark border-secondary border-opacity-25 text-white rounded-4 shadow-lg">
+      <div class="modal-header border-bottom border-secondary border-opacity-10 py-3">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-journal-music text-danger me-2"></i>Artistas más coleccionados
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div class="list-group list-group-flush bg-transparent" style="max-height: 400px; overflow-y: auto;">
+          <% if (topCollectedArtists && topCollectedArtists.length > 0) { %>
+            <% topCollectedArtists.forEach((ar, idx) => { %>
+              <div class="list-group-item bg-transparent border-secondary border-opacity-10 px-0 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                  <span class="text-danger fw-bold me-3" style="width: 20px;"><%= idx + 1 %></span>
+                  <% if (ar.image) { %>
+                    <img src="<%= ar.image %>" class="rounded border border-secondary border-opacity-25 me-3" style="width: 40px; height: 40px; object-fit: cover;" alt="<%= ar.name %>" onerror="this.src='/img/default-artist.png'">
+                  <% } else { %>
+                    <img src="/img/default-artist.png" class="rounded border border-secondary border-opacity-25 me-3" style="width: 40px; height: 40px; object-fit: cover;" alt="<%= ar.name %>">
+                  <% } %>
+                  <span class="text-white fw-medium"><%= ar.name %></span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="badge bg-secondary rounded-pill text-white small" style="font-size: 0.75rem;"><%= ar.album_count %> <%= ar.album_count === 1 ? 'álbum' : 'álbumes' %></span>
+                  <a href="/artists/<%= encodeURIComponent(ar.id) %>" class="btn btn-sm btn-outline-secondary">Ir al Artista</a>
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <p class="text-secondary text-center my-4">No hay datos de artistas coleccionados.</p>
+          <% } %>
+        </div>
       </div>
     </div>
   </div>
@@ -1192,6 +1231,21 @@
           console.error('Error al analizar fotos:', err);
           progressText.textContent = 'Ocurrió un error durante el análisis de imágenes.';
         }
+      });
+    }
+
+    // Lógica para modal de Artistas más Coleccionados
+    const topCollectedModalEl = document.getElementById('topCollectedModal');
+    let topCollectedModal = null;
+    if (topCollectedModalEl) {
+      topCollectedModal = new bootstrap.Modal(topCollectedModalEl);
+    }
+
+    const openTopCollectedBtn = document.getElementById('openTopCollectedBtn');
+    if (openTopCollectedBtn && topCollectedModal) {
+      openTopCollectedBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        topCollectedModal.show();
       });
     }
 

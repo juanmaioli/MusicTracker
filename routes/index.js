@@ -106,6 +106,15 @@ router.get('/stats', (req, res) => {
     `).get();
     const topArtistName = topArtistRes ? `${topArtistRes.name} (${topArtistRes.album_count} álb.)` : 'N/A';
 
+    const topCollectedArtists = db.prepare(`
+      SELECT ar.id, ar.name, ar.image, COUNT(al.id) AS album_count
+      FROM artists ar
+      JOIN albums al ON ar.id = al.artist_id
+      GROUP BY ar.id
+      ORDER BY album_count DESC, ar.name ASC
+      LIMIT 10
+    `).all();
+
     const goldenYearRes = db.prepare(`
       SELECT release_year, COUNT(*) AS count
       FROM albums
@@ -167,11 +176,16 @@ router.get('/stats', (req, res) => {
       ORDER BY ar.name COLLATE NOCASE ASC
     `).all();
 
-    // 6. Artistas sin fotos
+    // 6. Artistas sin fotos (sin imagen principal local o con galería vacía)
     const artistsWithoutPhotos = db.prepare(`
       SELECT id, name
       FROM artists
-      WHERE image IS NULL OR image = ''
+      WHERE image IS NULL 
+         OR image = '' 
+         OR image LIKE 'http%' 
+         OR images IS NULL 
+         OR images = '' 
+         OR images = '[]'
       ORDER BY name COLLATE NOCASE ASC
     `).all();
 
@@ -191,6 +205,7 @@ router.get('/stats', (req, res) => {
       artistsWithoutPhotos,
       avgAlbumsPerArtist,
       topArtistName,
+      topCollectedArtists,
       goldenYear,
       favoriteRate
     });

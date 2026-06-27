@@ -144,7 +144,10 @@ erDiagram
 
 ## 🚀 Historial de Versiones
 
-### v1.31.1 (Actual)
+### v1.31.2 (Actual)
+*   **🐛 Corrección en Artistas sin Fotos y Modal Top 10:** Se corrigió el indicador "Sin Fotos" en las estadísticas para identificar correctamente a los artistas sin imágenes en su galería o con imágenes externas fallidas. Además, se transformó el "Artista más coleccionado" en un enlace interactivo que despliega un modal con el Top 10 de artistas más coleccionados (con mayor cantidad de álbumes) y accesos directos.
+
+### v1.31.1
 *   **📁 Reubicación de Carpeta de Imágenes Huérfanas:** Se trasladó la carpeta `huerfanas/` a dentro de `./public/images/huerfanas/` para centralizar todos los recursos estáticos. Se actualizaron las referencias en el backend (`routes/index.js`), los mensajes informativos en la vista de estadísticas (`views/stats.ejs`), las reglas de exclusión en `.gitignore` y se eliminó el montaje de volumen innecesario en `compose.yml`.
 
 ### v1.31.0
